@@ -1,0 +1,112 @@
+@use "sass:map";
+@use "@angular/material" as mat;
+
+// $color-config:    mat.get-color-config($theme);
+// $primary-palette: map.get($color-config, 'primary');
+// $accent-palette:  map.get($color-config, 'accent');
+// $warn-palette:    map.get($color-config, 'warn');
+// $is-dark-theme:   map.get($color-config, 'is-dark');
+
+:root {
+  --angle: 30deg;
+  --sin-p: sin(var(--angle));
+  --sin-n: calc(sin(var(--angle)) * -1);
+  --cos: cos(var(var(--angle)));
+}
+$background-color: #424242;
+
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.test {
+  width: 300px;
+  height: 200px;
+  background-color: red;
+  /* transform: matrix3d(
+    0.8660254037844387, 0.49999999999999994, 0, 0,
+    -0.49999999999999994, 0.8660254037844387, 0, 0, 
+    0, 0, 1, 0, 
+    0, 0, 0, 1); */
+  transform: matrix(
+    0.8660254037844387,
+    0.49999999999999994,
+    -0.49999999999999994,
+    0.8660254037844387,
+    0,
+    0
+  );
+  /* transform: rotateZ(30deg); */
+}
+
+header {
+  width: 100%;
+  height: 100px;
+  background: green;
+}
+
+main {
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+}
+
+nav {
+  width: 300px;
+  min-width: 300px;
+  background: red;
+  height: 100%;
+}
+
+aside {
+  width: 300px;
+  min-width: 300px;
+  background: red;
+  height: 100%;
+}
+
+footer {
+  width: 100%;
+  height: 100px;
+  background: green;
+}
+
+.tools-right {
+  $backgroundColor: #424242;
+  margin: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 200px;
+  background-color: $background-color;
+  box-shadow: 0px 2px 6px rgba(65, 89, 124, 0.06);
+  border-radius: 4px;
+  color: white;
+}
+
+.marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  background-color: #46b145;
+  border-radius: 50%;
+  cursor: pointer;
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  transition: box-shadow 0.23s ease-in-out, background 0.5s ease-in-out;
+  border: 1px solid white;
+
+  &:hover {
+    box-shadow: 0px 6px 5px rgba(65, 89, 124, 0.4);
+    background-color: #54cb4f;
+    z-index: 10000;
+  }
+}

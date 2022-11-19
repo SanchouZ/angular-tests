@@ -1,0 +1,19 @@
+<section class="canvas-painter" #canvasContainer>
+    <canvas #canvas class="canvas-painter__canvas"></canvas>
+    <div *ngIf="showDebugPanel" class="canvas-painter__overlay_debug debug">
+        <div>CanvasCoords: {{ canvasCoords | json }}</div>
+        <div>ScreenCoords: {{ screenCoords | json }}</div>
+        <div>MovementVector: {{ movementVector | json }}</div>
+        <div>Zoom: {{ zoom }}</div>
+        <div>Frame: {{ canvasFrame | json }}</div>
+    </div>
+    <div class="canvas-painter__overlay_markers">
+        <ng-content select="[cpMarker]"></ng-content>
+    </div>
+    <div class="canvas-painter__overlay_tools-right">
+        <ng-content select="[toolsRight]"></ng-content>
+    </div>
+    <div class="canvas-painter__overlay_tools-left">
+        <ng-content select="[toolsLeft]"></ng-content>
+    </div>
+</section>
