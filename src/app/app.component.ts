@@ -1,3 +1,4 @@
+import { NONE_TYPE } from '@angular/compiler';
 import {
   AfterViewInit,
   Component,
@@ -96,9 +97,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   ];
 
   public pathOptions: CPSVGPathOptions = {
-    strokeColor: 'red',
+    strokeColor: '#ff131266',
     strokeWidth: 6,
-    maintainRelativeWidth: true,
+    strokeLineCap: 'round',
+    strokeLinejoin: 'round',
+    maintainRelativeWidth: false,
   };
 
   constructor(private renderer: Renderer2) {}

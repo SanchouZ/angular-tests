@@ -27,6 +27,7 @@ import {
   Point,
 } from './models/editor.model';
 import { CPLine } from './objects/line.mode';
+import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
   selector: 'app-canvas-painter',
@@ -42,24 +43,25 @@ export class CanvasPainterComponent
 
   @ViewChild('svgOverlay', { static: true }) svg: ElementRef<SVGElement>;
 
-  private ctx: CanvasRenderingContext2D;
-
   @Input() set zoom(zoomLevel: number) {
-    if (this.ctx && zoomLevel > 0 && zoomLevel !== this.zoom) {
-      const currentZoom = this.ctx.getTransform().a;
+    if (
+      this.ctx &&
+      zoomLevel <= this.maxZoom &&
+      zoomLevel > 0 &&
+      zoomLevel !== this.zoom
+    ) {
       const container = this.getCanvasContainerBounds();
-      const centerPoint = this.getCanvasCoordinates(
-        container.x + container.width / 2,
-        container.y + container.height / 2
+      const centerPoint = this.getCanvasCoordinatesCont(
+        container.width / 2,
+        container.height / 2
       );
-
-      const zoom = currentZoom < zoomLevel ? 1.1 : 0.9;
-
+      const zoom = zoomLevel / this.zoom;
       this.ctx.translate(centerPoint.x, centerPoint.y);
       this.ctx.scale(zoom, zoom);
       this.ctx.translate(-centerPoint.x, -centerPoint.y);
 
       const { a } = this.ctx.getTransform();
+
       this.#zoom = a;
 
       this.redraw(false, false);
@@ -70,6 +72,7 @@ export class CanvasPainterComponent
   @Input() showOriginLines = true;
   @Input() showDebugPanel = false;
   @Input() maintainRelativeWidth = false;
+  @Input() maxZoom = 20;
 
   @Input() set layers(layers: CPLayer[]) {
     if (layers) {
@@ -79,14 +82,22 @@ export class CanvasPainterComponent
 
   @Input() set bgImage(img: HTMLImageElement) {
     this.imageBackground = img;
-    this.redraw();
+    this.#holdBound = {
+      topLeft: { x: this.imageEntryPoint.x, y: this.imageEntryPoint.y },
+      bottomRight: {
+        x: this.imageBackground.width + this.imageEntryPoint.x,
+        y: this.imageBackground.height + this.imageEntryPoint.y,
+      },
+      width: this.imageBackground.width,
+      height: this.imageBackground.height,
+    };
+    this.redraw(true);
   }
 
   @Input() set bgImageByURL(url: string) {
     if (!url) {
       return;
     }
-
     const img = new Image();
     img.src = url;
     img.setAttribute('crossOrigin', '');
@@ -110,6 +121,7 @@ export class CanvasPainterComponent
   @Output() private canvasClick = new EventEmitter<CPClickEvent>();
   @Output() private zoomChange = new EventEmitter<number>();
   @Output() private canvasReady = new EventEmitter<CanvasPainterComponent>();
+  @Output() private loading = new EventEmitter<boolean>();
 
   @ContentChildren(CPMarker) markers: QueryList<CPMarker>;
   @ContentChildren(CPSVGPath) svgPaths: QueryList<CPSVGPath>;
@@ -118,31 +130,86 @@ export class CanvasPainterComponent
   public validateCanvas() {
     const { a, b, c, d, e, f } = this.ctx.getTransform();
     this.updateCanvasBounds();
-
     this.ctx.setTransform(a, b, c, d, e, f);
 
-    this.updateSvgBounds();
     this.redraw();
   }
 
-  @HostListener('window:wheel', ['$event'])
+  @HostListener('click', ['$event'])
+  private handleClick(evt: MouseEvent) {
+    const canvasPoint = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+
+    this.canvasClick.emit({
+      zoom: this.zoom,
+      canvasCoordinates: canvasPoint,
+      containerCoordinates: this.getContainerCoordinates(
+        canvasPoint.x,
+        canvasPoint.y
+      ),
+      bounds: this.getCanvasContainerBounds(),
+      frame: this.getCanvasFrame(),
+    });
+  }
+
+  @HostListener('mousedown', ['$event'])
+  private handleMouseDown(evt: MouseEvent) {
+    // if (evt.button === 1) {
+    //   this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    //   this.moveActive = true;
+    // }
+    this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    this.moveActive = true;
+  }
+
+  @HostListener('mouseup', ['$event'])
+  private handleMouseUp(evt: MouseEvent) {
+    this.moveActive = false;
+  }
+
+  @HostListener('mouseleave', ['$event'])
+  private handleMouseLeave(evt: MouseEvent) {
+    this.moveActive = false;
+  }
+
+  @HostListener('mousemove', ['$event'])
+  private handleMouseMove(evt: MouseEvent) {
+    const coords = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    this.#screenCoords.x = evt.clientX;
+    this.#screenCoords.y = evt.clientY;
+    const mX = coords.x - this.#canvasCoords.x;
+    const mY = coords.y - this.#canvasCoords.y;
+    this.#movementVector.x = mX > 0 ? Math.ceil(mX) : Math.floor(mX);
+    this.#movementVector.y = mY > 0 ? Math.ceil(mY) : Math.floor(mY);
+
+    this.#canvasCoords = coords;
+
+    if (this.moveActive) {
+      this.ctx.translate(
+        this.canvasCoords.x - this.moveStart.x,
+        this.canvasCoords.y - this.moveStart.y
+      );
+
+      this.redraw(false, false);
+    }
+  }
+
+  @HostListener('wheel', ['$event'])
   private handleWheel(event: WheelEvent) {
-    this.#canvasCoords = this.getCanvasCoordinates(
-      event.clientX,
-      event.clientY
-    );
+    const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+    if (this.zoom * zoomFactor < this.maxZoom) {
+      this.#canvasCoords = this.getCanvasCoordinates(
+        event.clientX,
+        event.clientY
+      );
 
-    const zoom = event.deltaY < 0 ? 1.1 : 0.9;
+      this.ctx.translate(this.#canvasCoords.x, this.#canvasCoords.y);
+      this.ctx.scale(zoomFactor, zoomFactor);
+      this.ctx.translate(-this.#canvasCoords.x, -this.#canvasCoords.y);
 
-    this.ctx.translate(this.#canvasCoords.x, this.#canvasCoords.y);
-    this.ctx.scale(zoom, zoom);
-    this.ctx.translate(-this.#canvasCoords.x, -this.#canvasCoords.y);
-
-    const { a } = this.ctx.getTransform();
-    this.#zoom = a;
-
-    this.updateSvgBounds();
-    this.redraw();
+      const { a } = this.ctx.getTransform();
+      this.#zoom = a;
+      this.redraw();
+    }
   }
 
   @HostListener('window:keypress', ['$event'])
@@ -166,6 +233,8 @@ export class CanvasPainterComponent
     }
   }
 
+  private ctx: CanvasRenderingContext2D;
+
   private imageEntryPoint: Point = { x: 0, y: 0 };
   private clicks: Point[] = [];
   private showSin = false;
@@ -186,14 +255,23 @@ export class CanvasPainterComponent
 
   private sub = new Subscription();
 
-  constructor(private renderer: Renderer2, private cd: ChangeDetectorRef) {}
+  public isLoading = false;
+
+  constructor(
+    public utils: CanvasPainterUtilsService,
+    private renderer: Renderer2,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
 
+    if (this.ctx) {
+      this.utils.ctx = this.ctx;
+    }
+
     const bounds = this.canvasContainer.nativeElement.getBoundingClientRect();
     this.updateCanvasBounds();
-    this.updateSvgBounds();
 
     if (this.centerOrigin) {
       this.ctx.translate(bounds.width / 2, bounds.height / 2);
@@ -202,101 +280,6 @@ export class CanvasPainterComponent
     this.#zoom = this.ctx.getTransform().a;
 
     this.redraw();
-
-    this.renderer.listen(
-      this.canvas.nativeElement,
-      'click',
-      (evt: MouseEvent) => {
-        const canvasPoint = this.getCanvasCoordinates(evt.clientX, evt.clientY);
-
-        this.canvasClick.emit({
-          zoom: this.zoom,
-          canvasCoordinates: canvasPoint,
-          containerCoordinates: this.getContainerCoordinates(
-            canvasPoint.x,
-            canvasPoint.y
-          ),
-          bounds: this.getCanvasContainerBounds(),
-          frame: this.getCanvasFrame(),
-        });
-      }
-    );
-
-    this.renderer.listen(
-      this.canvas.nativeElement,
-      'mousedown',
-      (evt: MouseEvent) => {
-        // if (evt.button === 1) {
-        //   this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
-        //   this.moveActive = true;
-        // }
-        this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
-        this.moveActive = true;
-      }
-    );
-
-    this.renderer.listen(
-      this.canvas.nativeElement,
-      'mouseup',
-      (evt: MouseEvent) => {
-        this.moveActive = false;
-      }
-    );
-
-    this.renderer.listen(
-      this.canvas.nativeElement,
-      'mouseleave',
-      (evt: MouseEvent) => {
-        this.moveActive = false;
-      }
-    );
-
-    this.renderer.listen(
-      this.canvas.nativeElement,
-      'mousemove',
-      (evt: MouseEvent) => {
-        const coords = this.getCanvasCoordinates(evt.clientX, evt.clientY);
-        this.#screenCoords.x = evt.clientX;
-        this.#screenCoords.y = evt.clientY;
-        const mX = coords.x - this.#canvasCoords.x;
-        const mY = coords.y - this.#canvasCoords.y;
-        this.#movementVector.x = mX > 0 ? Math.ceil(mX) : Math.floor(mX);
-        this.#movementVector.y = mY > 0 ? Math.ceil(mY) : Math.floor(mY);
-
-        this.#canvasCoords = coords;
-
-        if (this.moveActive) {
-          this.ctx.translate(
-            this.canvasCoords.x - this.moveStart.x,
-            this.canvasCoords.y - this.moveStart.y
-          );
-          this.updateSvgBounds();
-          this.redraw();
-        }
-      }
-    );
-
-    // this.renderer.listen(
-    //   this.canvas.nativeElement,
-    //   'wheel',
-    //   (evt: WheelEvent) => {
-    //     this.#canvasCoords = this.getCanvasCoordinates(
-    //       evt.clientX,
-    //       evt.clientY
-    //     );
-
-    //     const zoom = evt.deltaY < 0 ? 1.1 : 0.9;
-
-    //     this.ctx.translate(this.#canvasCoords.x, this.#canvasCoords.y);
-    //     this.ctx.scale(zoom, zoom);
-    //     this.ctx.translate(-this.#canvasCoords.x, -this.#canvasCoords.y);
-
-    //     const { a } = this.ctx.getTransform();
-    //     this.#zoom = a;
-
-    //     this.redraw();
-    //   }
-    // );
 
     this.canvasReady.emit(this);
   }
@@ -334,6 +317,15 @@ export class CanvasPainterComponent
     return this.#zoom;
   }
 
+  public get transform(): DOMMatrix {
+    return this.ctx.getTransform();
+  }
+
+  public toogleLoadingState(): void {
+    this.isLoading = !this.isLoading;
+    this.loading.emit(this.isLoading);
+  }
+
   private updateCanvasBounds(): void {
     const bounds = this.canvasContainer.nativeElement.getBoundingClientRect();
     const aspectRatio = bounds.height / bounds.width;
@@ -351,28 +343,30 @@ export class CanvasPainterComponent
   }
 
   private updateSvgBounds(): void {
-    const canvasBounds =
-      this.canvasContainer.nativeElement.getBoundingClientRect();
-    const canvasFrame = this.getCanvasFrame();
+    if (this.svg) {
+      const canvasBounds =
+        this.canvasContainer.nativeElement.getBoundingClientRect();
+      const canvasFrame = this.getCanvasFrame();
 
-    this.renderer.setAttribute(
-      this.svg.nativeElement,
-      'width',
-      `${canvasBounds.width}`
-    );
-    this.renderer.setAttribute(
-      this.svg.nativeElement,
-      'height',
-      `${canvasBounds.height}`
-    );
+      this.renderer.setAttribute(
+        this.svg.nativeElement,
+        'width',
+        `${canvasBounds.width}`
+      );
+      this.renderer.setAttribute(
+        this.svg.nativeElement,
+        'height',
+        `${canvasBounds.height}`
+      );
 
-    this.renderer.setAttribute(
-      this.svg.nativeElement,
-      'viewBox',
-      `${canvasFrame.topLeft.x} ${canvasFrame.topLeft.y} ${
-        -canvasFrame.topLeft.x + canvasFrame.bottomRight.x
-      } ${-canvasFrame.topLeft.y + canvasFrame.bottomRight.y}`
-    );
+      this.renderer.setAttribute(
+        this.svg.nativeElement,
+        'viewBox',
+        `${canvasFrame.topLeft.x} ${canvasFrame.topLeft.y} ${
+          -canvasFrame.topLeft.x + canvasFrame.bottomRight.x
+        } ${-canvasFrame.topLeft.y + canvasFrame.bottomRight.y}`
+      );
+    }
   }
 
   private redraw(
@@ -421,8 +415,10 @@ export class CanvasPainterComponent
 
     this.#canvasFrame = this.getCanvasFrame();
     if (emitZoom) {
-      this.zoomChange.emit(this.#zoom);
+      this.zoomChange.emit(this.zoom);
     }
+
+    this.updateSvgBounds();
   }
 
   private updateMarkers(): void {
@@ -436,7 +432,7 @@ export class CanvasPainterComponent
     });
 
     if (hasLinks) {
-      this.createMarkerLinks('markers', true);
+      this.createMarkerLinks('markers', false);
     }
   }
 
@@ -473,7 +469,7 @@ export class CanvasPainterComponent
               ],
               {
                 maintainRelativeWidth:
-                  maintainRelativeWidth ?? this.maintainRelativeWidth,
+                  maintainRelativeWidth || this.maintainRelativeWidth,
               }
             )
           );
@@ -536,13 +532,6 @@ export class CanvasPainterComponent
         ? bound.bottomRight.y - this.#canvasFrame.height
         : minTranslateY;
 
-    console.log(
-      'image: ',
-      this.imageBackground.width,
-      'x',
-      this.imageBackground.height
-    );
-
     if (forceZoomCheck || this.zoom < minZoom) {
       transform.a = minZoom;
       transform.d = minZoom;
@@ -589,102 +578,6 @@ export class CanvasPainterComponent
     this.ctx.setTransform(transform);
     this.#zoom = transform.a;
     this.#canvasFrame = this.getCanvasFrame();
-  }
-
-  private holdImageInViewPort(): void {
-    if (this.imageBackground && this.holdZoomToImage) {
-      let transform = this.ctx.getTransform();
-      let transformInv = this.ctx.getTransform().inverse();
-
-      const zoomX = this.#canvasFrame.width / this.imageBackground.width;
-      const zoomY = this.#canvasFrame.height / this.imageBackground.height;
-      const minZoom = Math.min(zoomX, zoomY) / transformInv.a;
-
-      let xDiff = this.imageBackground.width - this.#canvasFrame.width;
-      let yDiff = this.imageBackground.height - this.#canvasFrame.height;
-
-      const minTranslateX = xDiff > 0 ? -10 : xDiff / 2;
-      const minTranslateY = yDiff > 0 ? -10 : yDiff / 2;
-
-      const maxTranslateX =
-        xDiff > 0
-          ? this.imageBackground.width - this.#canvasFrame.width + 10
-          : minTranslateX;
-      const maxTranslateY =
-        yDiff > 0
-          ? this.imageBackground.height - this.#canvasFrame.height + 10
-          : minTranslateY;
-
-      console.log(
-        'image: ',
-        this.imageBackground.width,
-        'x',
-        this.imageBackground.height
-      );
-      console.log(
-        'frame: ',
-        this.#canvasFrame.width,
-        'x',
-        this.#canvasFrame.height
-      );
-      console.log('Transform: ', transform.a, transform.e, transform.f);
-      console.log(
-        'TransformInv: ',
-        transformInv.a,
-        transformInv.e,
-        transformInv.f
-      );
-
-      console.log('Min zoom: ', minZoom);
-      console.log('Min TranslateX: ', minTranslateX);
-      console.log('Min TranslateY: ', minTranslateY);
-      console.log('Max TranslateX: ', maxTranslateX);
-      console.log('Max TranslateY: ', maxTranslateY);
-      console.log('Max TranslateX: ', maxTranslateX * transform.a * -1);
-      console.log('Max TranslateY: ', maxTranslateY * transform.a * -1);
-
-      if (this.zoom < minZoom) {
-        console.log('zoom correct');
-        console.log(xDiff, yDiff);
-        transform.a = minZoom;
-        transform.d = minZoom;
-
-        this.ctx.setTransform(transform);
-
-        transform = this.ctx.getTransform();
-        this.#zoom = transform.a;
-        this.#canvasFrame = this.getCanvasFrame();
-
-        xDiff = this.imageBackground.width - this.#canvasFrame.width;
-        yDiff = this.imageBackground.height - this.#canvasFrame.height;
-
-        console.log(xDiff, yDiff);
-        transform.e = Math.abs(xDiff);
-        transform.f = Math.abs(yDiff / 2) / (1 / transform.a);
-
-        console.log(transform);
-      } else if (this.zoom > minZoom) {
-        console.log('trans correct');
-        if (this.zoom > minZoom && transformInv.e < minTranslateX) {
-          transform.e = minTranslateX * transform.a * -1;
-        }
-        if (this.zoom > minZoom && transformInv.e > maxTranslateX) {
-          transform.e = maxTranslateX * transform.a * -1;
-        }
-        if (this.zoom > minZoom && transformInv.f < minTranslateY) {
-          transform.f = minTranslateY * transform.a * -1;
-        }
-        if (this.zoom > minZoom && transformInv.f > maxTranslateY) {
-          transform.f = maxTranslateY * transform.a * -1;
-        }
-      }
-
-      this.ctx.setTransform(transform);
-      this.#zoom = transform.a;
-      this.#canvasFrame = this.getCanvasFrame();
-      // const { a, b, c, d, e, f } = this.ctx.getTransform();
-      // console.log(a, b, c, d, e, f);
-    }
   }
 
   private handleCanvasClick(evt: MouseEvent) {
@@ -765,26 +658,6 @@ export class CanvasPainterComponent
 
   private getCanvasContainerBounds(): DOMRect {
     return this.canvasContainer.nativeElement.getBoundingClientRect();
-  }
-
-  public createSVGPath(
-    points: number[][] | number[][][],
-    options: CPSVGPathOptions
-  ): string {
-    let path = '';
-
-    points.forEach((point, index) => {
-      if (index === 0) {
-        path += `M${point[0]},${point[1]} `;
-      } else {
-        path += `L${point[0]},${point[1]} `;
-      }
-
-      if (options.closed && index === points.length - 1) {
-        path += `z`;
-      }
-    });
-    return path;
   }
 
   public handlePathClick(): void {

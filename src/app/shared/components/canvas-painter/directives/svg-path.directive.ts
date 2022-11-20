@@ -3,6 +3,8 @@ import {
   Input,
   Output,
   EventEmitter,
+  OnInit,
+  Attribute,
 } from '@angular/core';
 import { CPSVGPathOptions } from '../models/editor.model';
 
@@ -14,5 +16,5 @@ export class CPSVGPath {
   @Input() options: CPSVGPathOptions;
 
   @Output() pathClick = new EventEmitter();
-  constructor() {}
+  constructor(@Attribute('class') public hostClass: string) {}
 }

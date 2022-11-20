@@ -6,16 +6,24 @@
         <div>MovementVector: {{ movementVector | json }}</div>
         <div>Zoom: {{ zoom }}</div>
         <div>Frame: {{ canvasFrame | json }}</div>
+        <div>Transform: {{ transform | json }}</div>
     </div>
     <svg xmlns="http://www.w3.org/2000/svg" class="canvas-painter__overlay_svg" #svgOverlay>
-        <ng-content select="[cpSvg]"></ng-content>
-        <ng-container *ngFor="let path of svgPaths">
-            <path class="cp-path" [attr.d]="createSVGPath(path.geometry, path.options)"
-                [attr.stroke]="path.options?.strokeColor ?? 'black'"
-                [attr.stroke-width]="(path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth ? 1 / zoom : 1)"
-                (click)="path.pathClick.emit()">
-            </path>
-        </ng-container>
+        <g>
+            <ng-content select="[cpSvg]"></ng-content>
+        </g>
+        <g>
+            <ng-container *ngFor="let path of svgPaths">
+                <path class="cp-path" [ngClass]="path.hostClass"
+                    [attr.d]="utils.createSVGPath(path.geometry, path.options)"
+                    [attr.stroke]="path.options?.strokeColor ?? 'black'"
+                    [attr.stroke-width]="(path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth || maintainRelativeWidth ? 1 / zoom : 1)"
+                    [attr.stroke-linecap]="path.options?.strokeLineCap ?? 'butt'"
+                    [attr.stroke-linejoin]="path.options?.strokeLinejoin ?? 'miter'"
+                    [attr.fill]="path.options?.fill ?? 'none'" (click)="path.pathClick.emit()">
+                </path>
+            </ng-container>
+        </g>
     </svg>
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>

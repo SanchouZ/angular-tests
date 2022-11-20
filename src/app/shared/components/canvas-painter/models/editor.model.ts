@@ -43,6 +43,8 @@ export interface CPSVGPathOptions {
   closed?: boolean;
   strokeWidth?: number;
   strokeColor?: string;
+  strokeLineCap?: 'butt' | 'square' | 'round';
+  strokeLinejoin?: 'miter' | 'round' | 'bevel';
   fill?: string;
   maintainRelativeWidth?: boolean;
 }
