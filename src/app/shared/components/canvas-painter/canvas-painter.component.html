@@ -28,10 +28,7 @@
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>
     </div>
-    <div class="canvas-painter__overlay_tools-right">
-        <ng-content select="[toolsRight]"></ng-content>
-    </div>
-    <div class="canvas-painter__overlay_tools-left">
-        <ng-content select="[toolsLeft]"></ng-content>
+    <div *ngIf="isLoading" class="canvas-painter__overlay_loader">
+        <ng-content select="[loader]"></ng-content>
     </div>
 </section>

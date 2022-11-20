@@ -74,8 +74,17 @@ footer {
   background: green;
 }
 
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .tools-right {
   $backgroundColor: #424242;
+  position: absolute;
+  top: 0;
+  right: 0;
   margin: 16px;
   padding: 16px;
   display: flex;
@@ -86,6 +95,27 @@ footer {
   box-shadow: 0px 2px 6px rgba(65, 89, 124, 0.06);
   border-radius: 4px;
   color: white;
+}
+
+.loader {
+  pointer-events: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+
+  &__content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: $background-color;
+    box-shadow: 0px 2px 6px rgba(65, 89, 124, 0.06);
+    border-radius: 4px;
+    color: white;
+  }
 }
 
 .marker {

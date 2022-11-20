@@ -44,6 +44,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public component: Type<VideocardsNamesComponent> = VideocardsNamesComponent;
 
+  public loading = false;
+
   private test$ = new BehaviorSubject<number[]>([]);
 
   public imageToDraw$ = new BehaviorSubject<HTMLImageElement>(null);
@@ -120,6 +122,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.loadImage();
+  }
+
+  public handleCanvasLoading(state: boolean): void {
+    this.loading = state;
   }
 
   public loadImage() {

@@ -2,10 +2,40 @@
   <header>BLAADAF</header>
   <main>
     <nav></nav>
-    <app-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-      [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" (canvasReady)="onCanvasReady($event)"
-      (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
-      <div class="tools-right" toolsRight>
+    <div class="canvas">
+      <app-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="true" (canvasReady)="onCanvasReady($event)"
+        (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
+
+        <div class="loader" loader>
+          <div class="loader__content">
+            <mat-spinner [diameter]="25"></mat-spinner>
+          </div>
+        </div>
+
+        <cp-svg-path [geometry]="[[[0,0], [100,100], [200,-300], [420,150]], [[420,150], [400,500], [278,500]]]"
+          [options]="pathOptions" (pathClick)="pathClick()">
+        </cp-svg-path>
+        <!-- <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
+            </cp-svg-path> -->
+
+        <!-- <cp-svg-path [geometry]="[[0,0], [100,100], [200,-300]]" [options]="pathOptions" (pathClick)="pathClick()">
+            </cp-svg-path>
+            <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
+            </cp-svg-path> -->
+
+        <!-- <cp-svg-path [geometry]="[[400,400], [620,420], [510,450]]" [options]="pathOptions"></cp-svg-path>
+            <cp-svg-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [options]="pathOptions"></cp-svg-path>
+            <cp-svg-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [options]="pathOptions"></cp-svg-path>
+            <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [options]="pathOptions"></cp-svg-path> -->
+
+        <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
+          [linkedMarkers]="marker.links" [options]="markerOptions" class="marker">{{ marker.value }}
+        </div> -->
+
+      </app-canvas-painter>
+
+      <div class="tools-right">
         <mat-button-toggle-group [value]="currentImageIndex" aria-label="Plans" (change)="changeImage($event)">
           <mat-button-toggle *ngFor="let image of images; let i = index" [value]="i ">{{ i + 1 }}</mat-button-toggle>
         </mat-button-toggle-group>
@@ -14,28 +44,7 @@
         </mat-slider>
         <mat-slide-toggle [(ngModel)]="isMarkersAddMode">Markers add mode: {{isMarkersAddMode}}</mat-slide-toggle>
       </div>
-
-      <cp-svg-path [geometry]="[[[0,0], [100,100], [200,-300], [420,150]], [[420,150], [400,500], [278,500]]]"
-        [options]="pathOptions" (pathClick)="pathClick()">
-      </cp-svg-path>
-      <!-- <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
-      </cp-svg-path> -->
-
-      <!-- <cp-svg-path [geometry]="[[0,0], [100,100], [200,-300]]" [options]="pathOptions" (pathClick)="pathClick()">
-      </cp-svg-path>
-      <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
-      </cp-svg-path> -->
-
-      <!-- <cp-svg-path [geometry]="[[400,400], [620,420], [510,450]]" [options]="pathOptions"></cp-svg-path>
-      <cp-svg-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [options]="pathOptions"></cp-svg-path>
-      <cp-svg-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [options]="pathOptions"></cp-svg-path>
-      <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [options]="pathOptions"></cp-svg-path> -->
-
-      <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
-        [linkedMarkers]="marker.links" [options]="markerOptions" class="marker">{{ marker.value }}
-      </div> -->
-
-    </app-canvas-painter>
+    </div>
     <aside></aside>
   </main>
   <footer>sds</footer>

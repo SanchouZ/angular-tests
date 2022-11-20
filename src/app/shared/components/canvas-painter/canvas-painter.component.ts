@@ -101,6 +101,9 @@ export class CanvasPainterComponent
     const img = new Image();
     img.src = url;
     img.setAttribute('crossOrigin', '');
+
+    this.toogleLoadingState();
+
     img.onload = () => {
       this.imageBackground = img;
       this.#holdBound = {
@@ -113,7 +116,10 @@ export class CanvasPainterComponent
         height: this.imageBackground.height,
       };
       this.redraw(true);
+      this.toogleLoadingState();
     };
+
+    img.onerror = () => this.toogleLoadingState();
   }
 
   @Input() holdZoomToImage = false;
@@ -138,7 +144,7 @@ export class CanvasPainterComponent
   @HostListener('click', ['$event'])
   private handleClick(evt: MouseEvent) {
     const canvasPoint = this.getCanvasCoordinates(evt.clientX, evt.clientY);
-
+    console.log(evt);
     this.canvasClick.emit({
       zoom: this.zoom,
       canvasCoordinates: canvasPoint,
