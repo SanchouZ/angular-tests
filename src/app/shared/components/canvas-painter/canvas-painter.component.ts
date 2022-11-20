@@ -12,12 +12,20 @@ import {
   Input,
   ContentChildren,
   QueryList,
+  ChangeDetectorRef,
 } from '@angular/core';
 
 import { Subscription, fromEvent } from 'rxjs';
 import { tap, debounceTime } from 'rxjs/operators';
 import { CPMarker } from './directives/marker.directive';
-import { CPBound, CPClickEvent, CPLayer, Point } from './models/editor.model';
+import { CPSVGPath } from './directives/svg-path.directive';
+import {
+  CPBound,
+  CPClickEvent,
+  CPLayer,
+  CPSVGPathOptions,
+  Point,
+} from './models/editor.model';
 import { CPLine } from './objects/line.mode';
 
 @Component({
@@ -31,6 +39,8 @@ export class CanvasPainterComponent
   @ViewChild('canvas', { static: true }) canvas: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasContainer', { static: true })
   canvasContainer: ElementRef<HTMLElement>;
+
+  @ViewChild('svgOverlay', { static: true }) svg: ElementRef<SVGElement>;
 
   private ctx: CanvasRenderingContext2D;
 
@@ -102,12 +112,16 @@ export class CanvasPainterComponent
   @Output() private canvasReady = new EventEmitter<CanvasPainterComponent>();
 
   @ContentChildren(CPMarker) markers: QueryList<CPMarker>;
+  @ContentChildren(CPSVGPath) svgPaths: QueryList<CPSVGPath>;
 
   @HostListener('window:resize', ['$event'])
-  private handleResize(event: Event) {
+  public validateCanvas() {
     const { a, b, c, d, e, f } = this.ctx.getTransform();
     this.updateCanvasBounds();
+
     this.ctx.setTransform(a, b, c, d, e, f);
+
+    this.updateSvgBounds();
     this.redraw();
   }
 
@@ -127,6 +141,7 @@ export class CanvasPainterComponent
     const { a } = this.ctx.getTransform();
     this.#zoom = a;
 
+    this.updateSvgBounds();
     this.redraw();
   }
 
@@ -171,13 +186,14 @@ export class CanvasPainterComponent
 
   private sub = new Subscription();
 
-  constructor(private renderer: Renderer2) {}
+  constructor(private renderer: Renderer2, private cd: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
 
     const bounds = this.canvasContainer.nativeElement.getBoundingClientRect();
     this.updateCanvasBounds();
+    this.updateSvgBounds();
 
     if (this.centerOrigin) {
       this.ctx.translate(bounds.width / 2, bounds.height / 2);
@@ -254,7 +270,7 @@ export class CanvasPainterComponent
             this.canvasCoords.x - this.moveStart.x,
             this.canvasCoords.y - this.moveStart.y
           );
-
+          this.updateSvgBounds();
           this.redraw();
         }
       }
@@ -288,6 +304,9 @@ export class CanvasPainterComponent
   ngAfterViewInit(): void {
     this.sub.add(
       this.markers.changes.pipe(tap(() => this.redraw())).subscribe()
+    );
+    this.sub.add(
+      this.markers.changes.pipe(tap(() => this.cd.detectChanges())).subscribe()
     );
   }
 
@@ -328,6 +347,31 @@ export class CanvasPainterComponent
       this.canvas.nativeElement,
       'height',
       `${height}`
+    );
+  }
+
+  private updateSvgBounds(): void {
+    const canvasBounds =
+      this.canvasContainer.nativeElement.getBoundingClientRect();
+    const canvasFrame = this.getCanvasFrame();
+
+    this.renderer.setAttribute(
+      this.svg.nativeElement,
+      'width',
+      `${canvasBounds.width}`
+    );
+    this.renderer.setAttribute(
+      this.svg.nativeElement,
+      'height',
+      `${canvasBounds.height}`
+    );
+
+    this.renderer.setAttribute(
+      this.svg.nativeElement,
+      'viewBox',
+      `${canvasFrame.topLeft.x} ${canvasFrame.topLeft.y} ${
+        -canvasFrame.topLeft.x + canvasFrame.bottomRight.x
+      } ${-canvasFrame.topLeft.y + canvasFrame.bottomRight.y}`
     );
   }
 
@@ -721,6 +765,30 @@ export class CanvasPainterComponent
 
   private getCanvasContainerBounds(): DOMRect {
     return this.canvasContainer.nativeElement.getBoundingClientRect();
+  }
+
+  public createSVGPath(
+    points: number[][] | number[][][],
+    options: CPSVGPathOptions
+  ): string {
+    let path = '';
+
+    points.forEach((point, index) => {
+      if (index === 0) {
+        path += `M${point[0]},${point[1]} `;
+      } else {
+        path += `L${point[0]},${point[1]} `;
+      }
+
+      if (options.closed && index === points.length - 1) {
+        path += `z`;
+      }
+    });
+    return path;
+  }
+
+  public handlePathClick(): void {
+    console.log('path');
   }
 
   private drawArc(x: number, y: number) {

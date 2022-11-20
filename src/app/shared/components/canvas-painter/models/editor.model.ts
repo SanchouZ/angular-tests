@@ -38,3 +38,11 @@ export interface CPLineOptions {
   strokeColor?: string;
   maintainRelativeWidth?: boolean;
 }
+
+export interface CPSVGPathOptions {
+  closed?: boolean;
+  strokeWidth?: number;
+  strokeColor?: string;
+  fill?: string;
+  maintainRelativeWidth?: boolean;
+}

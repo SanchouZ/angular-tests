@@ -7,6 +7,16 @@
         <div>Zoom: {{ zoom }}</div>
         <div>Frame: {{ canvasFrame | json }}</div>
     </div>
+    <svg xmlns="http://www.w3.org/2000/svg" class="canvas-painter__overlay_svg" #svgOverlay>
+        <ng-content select="[cpSvg]"></ng-content>
+        <ng-container *ngFor="let path of svgPaths">
+            <path class="cp-path" [attr.d]="createSVGPath(path.geometry, path.options)"
+                [attr.stroke]="path.options?.strokeColor ?? 'black'"
+                [attr.stroke-width]="(path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth ? 1 / zoom : 1)"
+                (click)="path.pathClick.emit()">
+            </path>
+        </ng-container>
+    </svg>
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>
     </div>

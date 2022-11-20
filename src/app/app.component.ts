@@ -23,9 +23,11 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
+import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-path.directive';
 import {
   CPClickEvent,
   CPMarkerOptions,
+  CPSVGPathOptions,
 } from './shared/components/canvas-painter/models/editor.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
 
@@ -93,6 +95,12 @@ export class AppComponent implements OnInit, AfterViewInit {
     },
   ];
 
+  public pathOptions: CPSVGPathOptions = {
+    strokeColor: 'red',
+    strokeWidth: 6,
+    maintainRelativeWidth: true,
+  };
+
   constructor(private renderer: Renderer2) {}
 
   ngOnInit(): void {
@@ -143,5 +151,9 @@ export class AppComponent implements OnInit, AfterViewInit {
         links: [this.markers.length - 1],
       });
     }
+  }
+
+  pathClick(): void {
+    console.log('path click');
   }
 }

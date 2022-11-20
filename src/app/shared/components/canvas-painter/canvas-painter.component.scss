@@ -26,9 +26,12 @@
       position: relative;
       z-index: 100;
     }
-    &_debug {
-      position: relative;
-      z-index: 100;
+
+    &_svg {
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
     &_tools-right {
@@ -53,4 +56,8 @@
   background-color: color.change($color: #2b405f, $alpha: 0.7);
   color: white;
   font-weight: 500;
+}
+
+.cp-path {
+  pointer-events: all;
 }
