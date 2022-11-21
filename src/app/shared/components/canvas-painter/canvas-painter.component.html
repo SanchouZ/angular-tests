@@ -28,7 +28,7 @@
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>
     </div>
-    <div *ngIf="isLoading" class="canvas-painter__overlay_loader">
+    <div *ngIf="isLoading" @fadeInOut class="canvas-painter__overlay_loader">
         <ng-content select="[loader]"></ng-content>
     </div>
 </section>

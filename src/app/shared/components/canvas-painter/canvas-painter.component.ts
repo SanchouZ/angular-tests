@@ -17,6 +17,7 @@ import {
 
 import { Subscription, fromEvent } from 'rxjs';
 import { tap, debounceTime } from 'rxjs/operators';
+import { fadeInOutAnimation } from './animations/fade-in-out.animation';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
 import {
@@ -33,6 +34,7 @@ import { CanvasPainterUtilsService } from './services/canvas-painter-utils.servi
   selector: 'app-canvas-painter',
   templateUrl: './canvas-painter.component.html',
   styleUrls: ['./canvas-painter.component.scss'],
+  animations: [fadeInOutAnimation],
 })
 export class CanvasPainterComponent
   implements OnInit, AfterViewInit, OnDestroy
