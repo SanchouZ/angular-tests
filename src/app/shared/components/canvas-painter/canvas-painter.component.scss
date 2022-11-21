@@ -68,4 +68,6 @@
 
 .cp-path {
   pointer-events: all;
+  transition: stroke 0.23s ease-in-out, stroke-width 0.23s ease-in-out,
+    fill 0.23s ease-in-out;
 }

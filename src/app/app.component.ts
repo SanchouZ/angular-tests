@@ -2,11 +2,7 @@ import { NONE_TYPE } from '@angular/compiler';
 import {
   AfterViewInit,
   Component,
-  ComponentRef,
-  ContentChild,
   ElementRef,
-  HostListener,
-  Inject,
   OnInit,
   Renderer2,
   Type,
@@ -14,23 +10,24 @@ import {
 } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
 import { MatSliderChange } from '@angular/material/slider';
-import {
-  BehaviorSubject,
-  delayWhen,
-  filter,
-  interval,
-  of,
-  tap,
-  withLatestFrom,
-} from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
 import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-path.directive';
 import {
   CPClickEvent,
   CPMarkerOptions,
   CPSVGPathOptions,
+  Point,
 } from './shared/components/canvas-painter/models/editor.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
+
+interface Marker {
+  id: number;
+  x: number;
+  y: number;
+  value: string;
+  links: number[];
+}
 
 @Component({
   selector: 'app-root',
@@ -67,7 +64,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     offsetX: -20,
     offsetY: -20,
   };
-  public markers = [
+  public markers: Marker[] = [
     {
       id: 0,
       x: 0,
@@ -100,7 +97,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public pathOptions: CPSVGPathOptions = {
     strokeColor: '#ff131266',
+    hoverStrokeColor: 'green',
     strokeWidth: 6,
+    hoverStrokeWidth: 12,
     strokeLineCap: 'round',
     strokeLinejoin: 'round',
     maintainRelativeWidth: false,
@@ -139,7 +138,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   public changeImage(evt: MatButtonToggleChange) {
-    console.log(evt);
     this.imageURL$.next(this.images[evt.value]);
   }
 
@@ -162,7 +160,18 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  pathClick(): void {
+  handleMarkerClick(): void {
+    console.log('marker click app');
+  }
+
+  pathClick(evt: CPClickEvent, options: any): void {
     console.log('path click');
+    console.log(evt);
+    console.log(options);
+  }
+
+  handleMarkerPositionUdpdate(position: Point, marker: Marker) {
+    marker.x = position.x;
+    marker.y = position.y;
   }
 }

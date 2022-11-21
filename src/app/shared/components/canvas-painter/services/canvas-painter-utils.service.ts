@@ -1,9 +1,16 @@
-import { Injectable } from '@angular/core';
-import { CPSVGPathOptions, Point } from '../models/editor.model';
+import { ElementRef, Injectable } from '@angular/core';
+import { CPSVGPathOptions, Point, CPBound } from '../models/editor.model';
 
 @Injectable()
 export class CanvasPainterUtilsService {
   private _ctx: CanvasRenderingContext2D;
+  private _canvasContainer: ElementRef<HTMLElement>;
+  private _svg: ElementRef<SVGElement>;
+
+  private _frame: CPBound;
+  private _canvasCoordinates: Point;
+  private _zoom: number;
+  private _redraw: (forceZoomCheck?: boolean, emitZoom?: boolean) => void;
 
   constructor() {}
 
@@ -13,6 +20,116 @@ export class CanvasPainterUtilsService {
 
   get ctx(): CanvasRenderingContext2D {
     return this._ctx;
+  }
+
+  set canvasContainer(container: ElementRef<HTMLElement>) {
+    this._canvasContainer = container;
+  }
+
+  get canvasContainer(): ElementRef<HTMLElement> {
+    return this._canvasContainer;
+  }
+
+  set svg(svg: ElementRef<SVGElement>) {
+    this._svg = svg;
+  }
+
+  get svg(): ElementRef<SVGElement> {
+    return this._svg;
+  }
+
+  set frame(frame: CPBound) {
+    this._frame = frame;
+  }
+
+  get frame(): CPBound {
+    return this._frame;
+  }
+
+  set zoom(zoom: number) {
+    this._zoom = zoom;
+  }
+
+  get zoom(): number {
+    return this._zoom;
+  }
+
+  set redraw(redraw: (forceZoomCheck?: boolean, emitZoom?: boolean) => void) {
+    this._redraw = redraw;
+  }
+
+  get redraw(): (forceZoomCheck?: boolean, emitZoom?: boolean) => void {
+    return this._redraw;
+  }
+
+  set canvasCoordinates(canvasCoordinates: Point) {
+    this._canvasCoordinates = canvasCoordinates;
+  }
+
+  get canvasCoordinates(): Point {
+    return this._canvasCoordinates;
+  }
+
+  public getCanvasContainerBounds(): DOMRect {
+    return this._canvasContainer.nativeElement.getBoundingClientRect();
+  }
+
+  /**
+   * Takes screen (event.screenX & event.screenY) coordinates and returns canvas coordinate
+   * @param x screen X
+   * @param y screen Y
+   * @returns
+   */
+  public getCanvasCoordinates(x: number, y: number): { x: number; y: number } {
+    const { a, b, c, d, e, f } = this.ctx.getTransform().invertSelf();
+
+    const bounds = this.getCanvasContainerBounds();
+    const offsetX = (x - bounds.x) * devicePixelRatio;
+    const offsetY = (y - bounds.y) * devicePixelRatio;
+
+    return {
+      x: a * offsetX + c * offsetY + e,
+      y: b * offsetX + d * offsetY + f,
+    };
+  }
+
+  /**
+   * Takes canvas container (or event.offsetX & event.offsetY) coordinates and returns canvas coordinate
+   * @param x screen X
+   * @param y screen Y
+   * @returns
+   */
+  public getCanvasCoordinatesCont(x: number, y: number): Point {
+    const { a, b, c, d, e, f } = this.ctx.getTransform().invertSelf();
+
+    const offsetX = x * devicePixelRatio;
+    const offsetY = y * devicePixelRatio;
+
+    return {
+      x: a * offsetX + c * offsetY + e,
+      y: b * offsetX + d * offsetY + f,
+    };
+  }
+
+  /**
+   * Takes canvas coordinates and returns canvas container coordinates
+   * @param x screen X
+   * @param y screen Y
+   * @returns
+   */
+  public getContainerCoordinates(x: number, y: number): Point {
+    const { a, b, c, d, e, f } = this.ctx.getTransform();
+
+    const offsetX = x;
+    const offsetY = y;
+
+    const cx = (a * offsetX + c * offsetY + e) * (1 / devicePixelRatio);
+    const cy = (b * offsetX + d * offsetY + f) * (1 / devicePixelRatio);
+
+    return {
+      x: cx,
+      y: cy,
+    };
   }
 
   public createSVGPath(
@@ -48,7 +165,7 @@ export class CanvasPainterUtilsService {
     return path;
   }
 
-  private rotatePoints(
+  public rotatePoints(
     points: Point[],
     angle: number,
     origin: { x: number; y: number }

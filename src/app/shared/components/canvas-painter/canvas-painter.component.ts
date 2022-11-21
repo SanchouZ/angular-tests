@@ -52,8 +52,8 @@ export class CanvasPainterComponent
       zoomLevel > 0 &&
       zoomLevel !== this.zoom
     ) {
-      const container = this.getCanvasContainerBounds();
-      const centerPoint = this.getCanvasCoordinatesCont(
+      const container = this.utils.getCanvasContainerBounds();
+      const centerPoint = this.utils.getCanvasCoordinatesCont(
         container.width / 2,
         container.height / 2
       );
@@ -79,6 +79,7 @@ export class CanvasPainterComponent
   @Input() set layers(layers: CPLayer[]) {
     if (layers) {
       this.#layers = layers;
+      this.redraw();
     }
   }
 
@@ -145,16 +146,19 @@ export class CanvasPainterComponent
 
   @HostListener('click', ['$event'])
   private handleClick(evt: MouseEvent) {
-    const canvasPoint = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    const canvasPoint = this.utils.getCanvasCoordinates(
+      evt.clientX,
+      evt.clientY
+    );
     console.log(evt);
     this.canvasClick.emit({
       zoom: this.zoom,
       canvasCoordinates: canvasPoint,
-      containerCoordinates: this.getContainerCoordinates(
+      containerCoordinates: this.utils.getContainerCoordinates(
         canvasPoint.x,
         canvasPoint.y
       ),
-      bounds: this.getCanvasContainerBounds(),
+      bounds: this.utils.getCanvasContainerBounds(),
       frame: this.getCanvasFrame(),
     });
   }
@@ -165,7 +169,7 @@ export class CanvasPainterComponent
     //   this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
     //   this.moveActive = true;
     // }
-    this.moveStart = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    this.moveStart = this.utils.getCanvasCoordinates(evt.clientX, evt.clientY);
     this.moveActive = true;
   }
 
@@ -181,7 +185,7 @@ export class CanvasPainterComponent
 
   @HostListener('mousemove', ['$event'])
   private handleMouseMove(evt: MouseEvent) {
-    const coords = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    const coords = this.utils.getCanvasCoordinates(evt.clientX, evt.clientY);
     this.#screenCoords.x = evt.clientX;
     this.#screenCoords.y = evt.clientY;
     const mX = coords.x - this.#canvasCoords.x;
@@ -198,6 +202,8 @@ export class CanvasPainterComponent
       );
 
       this.redraw(false, false);
+    } else {
+      this.updateUtils();
     }
   }
 
@@ -205,7 +211,7 @@ export class CanvasPainterComponent
   private handleWheel(event: WheelEvent) {
     const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
     if (this.zoom * zoomFactor < this.maxZoom) {
-      this.#canvasCoords = this.getCanvasCoordinates(
+      this.#canvasCoords = this.utils.getCanvasCoordinates(
         event.clientX,
         event.clientY
       );
@@ -231,8 +237,8 @@ export class CanvasPainterComponent
       // this.drawCos();
       // this.showCos = !this.showCos;
 
-      const container = this.getCanvasContainerBounds();
-      const centerPoint = this.getCanvasCoordinates(
+      const container = this.utils.getCanvasContainerBounds();
+      const centerPoint = this.utils.getCanvasCoordinates(
         container.x + container.width / 2,
         container.y + container.height / 2
       );
@@ -278,6 +284,14 @@ export class CanvasPainterComponent
       this.utils.ctx = this.ctx;
     }
 
+    if (this.canvasContainer) {
+      this.utils.canvasContainer = this.canvasContainer;
+    }
+
+    if (this.svg) {
+      this.utils.svg = this.svg;
+    }
+
     const bounds = this.canvasContainer.nativeElement.getBoundingClientRect();
     this.updateCanvasBounds();
 
@@ -303,6 +317,21 @@ export class CanvasPainterComponent
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+  }
+
+  public getEventInfo(): CPClickEvent {
+    const canvasPoint = this.#canvasCoords;
+
+    return {
+      zoom: this.zoom,
+      canvasCoordinates: canvasPoint,
+      containerCoordinates: this.utils.getContainerCoordinates(
+        canvasPoint.x,
+        canvasPoint.y
+      ),
+      bounds: this.utils.getCanvasContainerBounds(),
+      frame: this.getCanvasFrame(),
+    };
   }
 
   public get canvasCoords(): Point {
@@ -377,6 +406,13 @@ export class CanvasPainterComponent
     }
   }
 
+  private updateUtils(): void {
+    this.utils.frame = this.#canvasFrame;
+    this.utils.zoom = this.#zoom;
+    this.utils.canvasCoordinates = this.#canvasCoords;
+    this.utils.redraw = this.redraw.bind(this);
+  }
+
   private redraw(
     forceZoomCheck: boolean = false,
     emitZoom: boolean = true
@@ -427,12 +463,16 @@ export class CanvasPainterComponent
     }
 
     this.updateSvgBounds();
+    this.updateUtils();
   }
 
   private updateMarkers(): void {
     let hasLinks = false;
     this.markers?.forEach((marker) => {
-      const containerCoords = this.getContainerCoordinates(marker.x, marker.y);
+      const containerCoords = this.utils.getContainerCoordinates(
+        marker.x,
+        marker.y
+      );
       marker.updatePosition(containerCoords);
       if (marker.linkedMarkers && marker.linkedMarkers.length > 0) {
         hasLinks = true;
@@ -589,83 +629,27 @@ export class CanvasPainterComponent
   }
 
   private handleCanvasClick(evt: MouseEvent) {
-    const canvasCoords = this.getCanvasCoordinates(evt.clientX, evt.clientY);
+    const canvasCoords = this.utils.getCanvasCoordinates(
+      evt.clientX,
+      evt.clientY
+    );
     this.clicks.push(canvasCoords);
     this.drawArc(canvasCoords.x, canvasCoords.y);
   }
 
-  /**
-   * Takes screen (event.screenX & event.screenY) coordinates and returns canvas coordinate
-   * @param x screen X
-   * @param y screen Y
-   * @returns
-   */
-  private getCanvasCoordinates(x: number, y: number): { x: number; y: number } {
-    const { a, b, c, d, e, f } = this.ctx.getTransform().invertSelf();
-
-    const bounds = this.getCanvasContainerBounds();
-    const offsetX = (x - bounds.x) * devicePixelRatio;
-    const offsetY = (y - bounds.y) * devicePixelRatio;
-
-    return {
-      x: a * offsetX + c * offsetY + e,
-      y: b * offsetX + d * offsetY + f,
-    };
-  }
-
-  /**
-   * Takes canvas container (or event.offsetX & event.offsetY) coordinates and returns canvas coordinate
-   * @param x screen X
-   * @param y screen Y
-   * @returns
-   */
-  public getCanvasCoordinatesCont(x: number, y: number): Point {
-    const { a, b, c, d, e, f } = this.ctx.getTransform().invertSelf();
-
-    const offsetX = x * devicePixelRatio;
-    const offsetY = y * devicePixelRatio;
-
-    return {
-      x: a * offsetX + c * offsetY + e,
-      y: b * offsetX + d * offsetY + f,
-    };
-  }
-
-  /**
-   * Takes canvas coordinates and returns canvas container coordinates
-   * @param x screen X
-   * @param y screen Y
-   * @returns
-   */
-  public getContainerCoordinates(x: number, y: number): Point {
-    const { a, b, c, d, e, f } = this.ctx.getTransform();
-
-    const offsetX = x;
-    const offsetY = y;
-
-    const cx = (a * offsetX + c * offsetY + e) * (1 / devicePixelRatio);
-    const cy = (b * offsetX + d * offsetY + f) * (1 / devicePixelRatio);
-
-    return {
-      x: cx,
-      y: cy,
-    };
-  }
-
   private getCanvasFrame(): CPBound {
-    const bounds = this.getCanvasContainerBounds();
-    const topLeft = this.getCanvasCoordinates(bounds.x, bounds.y);
-    const bottomRight = this.getCanvasCoordinates(bounds.right, bounds.bottom);
+    const bounds = this.utils.getCanvasContainerBounds();
+    const topLeft = this.utils.getCanvasCoordinates(bounds.x, bounds.y);
+    const bottomRight = this.utils.getCanvasCoordinates(
+      bounds.right,
+      bounds.bottom
+    );
     return {
       topLeft,
       bottomRight,
       width: Math.abs(bottomRight.x - topLeft.x),
       height: Math.abs(bottomRight.y - topLeft.y),
     };
-  }
-
-  private getCanvasContainerBounds(): DOMRect {
-    return this.canvasContainer.nativeElement.getBoundingClientRect();
   }
 
   public handlePathClick(): void {

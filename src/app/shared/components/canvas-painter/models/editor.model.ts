@@ -28,8 +28,9 @@ export interface CPLayer {
 }
 
 export interface CPMarkerOptions {
-  offsetX: number;
-  offsetY: number;
+  offsetX?: number;
+  offsetY?: number;
+  editable?: boolean;
 }
 
 export interface CPLineOptions {
@@ -43,8 +44,11 @@ export interface CPSVGPathOptions {
   closed?: boolean;
   strokeWidth?: number;
   strokeColor?: string;
+  hoverStrokeWidth?: number;
+  hoverStrokeColor?: string;
   strokeLineCap?: 'butt' | 'square' | 'round';
   strokeLinejoin?: 'miter' | 'round' | 'bevel';
   fill?: string;
+  hoverFill?: string;
   maintainRelativeWidth?: boolean;
 }

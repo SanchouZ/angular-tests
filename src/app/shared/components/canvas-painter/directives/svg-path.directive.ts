@@ -6,7 +6,8 @@ import {
   OnInit,
   Attribute,
 } from '@angular/core';
-import { CPSVGPathOptions } from '../models/editor.model';
+import { CPClickEvent, CPSVGPathOptions } from '../models/editor.model';
+import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 
 @Directive({
   selector: 'cp-svg-path',
@@ -15,6 +16,11 @@ export class CPSVGPath {
   @Input() geometry: number[][] | number[][][];
   @Input() options: CPSVGPathOptions;
 
-  @Output() pathClick = new EventEmitter();
-  constructor(@Attribute('class') public hostClass: string) {}
+  public hover = false;
+
+  @Output() pathClick = new EventEmitter<CPClickEvent>();
+  constructor(
+    @Attribute('class') public hostClass: string,
+    private utils: CanvasPainterUtilsService
+  ) {}
 }

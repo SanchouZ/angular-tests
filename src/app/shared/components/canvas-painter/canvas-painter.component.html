@@ -16,11 +16,13 @@
             <ng-container *ngFor="let path of svgPaths">
                 <path class="cp-path" [ngClass]="path.hostClass"
                     [attr.d]="utils.createSVGPath(path.geometry, path.options)"
-                    [attr.stroke]="path.options?.strokeColor ?? 'black'"
-                    [attr.stroke-width]="(path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth || maintainRelativeWidth ? 1 / zoom : 1)"
+                    [attr.stroke]="path.hover ? path.options?.hoverStrokeColor ?? path.options?.strokeColor ?? 'black' : path.options?.strokeColor ?? 'black'"
+                    [attr.stroke-width]="(path.hover ? path.options?.hoverStrokeWidth ?? path.options?.strokeWidth ?? 2 : path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth || maintainRelativeWidth ? 1 / zoom : 1)"
                     [attr.stroke-linecap]="path.options?.strokeLineCap ?? 'butt'"
                     [attr.stroke-linejoin]="path.options?.strokeLinejoin ?? 'miter'"
-                    [attr.fill]="path.options?.fill ?? 'none'" (click)="path.pathClick.emit()">
+                    [attr.fill]="path.hover ? path.options?.hoverFill ?? path.options?.fill ?? 'none' : path.options?.fill ?? 'none'"
+                    (click)="path.pathClick.emit(getEventInfo())" (mouseenter)="path.hover = true"
+                    (mouseleave)="path.hover = false">
                 </path>
             </ng-container>
         </g>
