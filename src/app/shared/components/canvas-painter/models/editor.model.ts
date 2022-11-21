@@ -33,14 +33,7 @@ export interface CPMarkerOptions {
   editable?: boolean;
 }
 
-export interface CPLineOptions {
-  closed?: boolean;
-  lineWidth?: number;
-  strokeColor?: string;
-  maintainRelativeWidth?: boolean;
-}
-
-export interface CPSVGPathOptions {
+export interface CPPathOptions {
   closed?: boolean;
   strokeWidth?: number;
   strokeColor?: string;

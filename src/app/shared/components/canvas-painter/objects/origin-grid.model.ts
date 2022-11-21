@@ -1,4 +1,4 @@
-import { CPBound } from '../models/editor.model';
+import { CPBound, Point } from '../models/editor.model';
 import { CPObject } from './object.model';
 
 export class OriginGrid extends CPObject {
@@ -34,5 +34,9 @@ export class OriginGrid extends CPObject {
     this.ctx.stroke();
 
     this.ctx.restore();
+  }
+
+  public checkPointOn(point: Point): boolean {
+    return false;
   }
 }

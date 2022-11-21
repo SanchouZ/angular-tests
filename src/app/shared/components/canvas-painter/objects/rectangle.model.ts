@@ -3,13 +3,13 @@ import { CPObject } from './object.model';
 
 export class Rectangle extends CPObject {
   private _cornerRadius: number;
-  private _points: Point[];
+  private _points: Point[] = [];
 
   constructor(
     ctx: CanvasRenderingContext2D,
     private x: number,
     private y: number,
-    private widht: number,
+    private width: number,
     private height: number,
     cornerRadius: number = 0
   ) {
@@ -17,20 +17,34 @@ export class Rectangle extends CPObject {
     this._cornerRadius = cornerRadius;
     this._points.push(
       { x, y },
-      { x: x + widht, y },
-      { x: x + widht, y: y + height },
+      { x: x + width, y },
+      { x: x + width, y: y + height },
       { x, y: y + height }
     );
   }
 
   draw(): void {
     this.ctx.save();
-    this._points.forEach((point, i) => {
-      if (i === 0) {
-        this.ctx.moveTo(point.x + this._cornerRadius, point.y);
-      }
+    console.log('draw rect');
+    this.path = new Path2D();
 
-      //   ctx.lineTo(point.x - this._cornerRadius);
-    });
+    this.path.rect(this.x, this.y, this.width, this.height);
+
+    this.ctx.fillStyle = this.isPointInPath ? 'red' : 'green';
+    this.ctx.stroke(this.path);
+    this.ctx.fill(this.path);
+
+    this.ctx.restore();
+  }
+  // TODO: Not working as expected, it has to be done with math
+  public checkPointOn(point: Point): boolean {
+    this.isPointInPath = this.ctx.isPointInPath(this.path, point.x, point.y);
+    this.isPointInStroke = this.ctx.isPointInStroke(
+      this.path,
+      point.x,
+      point.y
+    );
+
+    return this.isPointInPath || this.isPointInStroke;
   }
 }

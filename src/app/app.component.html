@@ -3,7 +3,7 @@
   <main>
     <nav></nav>
     <div class="canvas">
-      <app-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
+      <app-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
         [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 
@@ -30,7 +30,8 @@
         <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [options]="pathOptions"></cp-svg-path>
 
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
-          [linkedMarkers]="marker.links" [options]="markerOptions" class="marker" (click)="handleMarkerClick()" (positionUpdated)="handleMarkerPositionUdpdate($event, marker)">{{ marker.value }}
+          [linkedMarkers]="marker.links" [options]="markerOptions" class="marker" (click)="handleMarkerClick()"
+          (positionUpdated)="handleMarkerPositionUdpdate($event, marker)">{{ marker.value }}
         </div> -->
 
       </app-canvas-painter>

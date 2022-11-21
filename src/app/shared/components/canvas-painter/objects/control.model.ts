@@ -12,4 +12,8 @@ export class Control extends CPObject implements Point {
   }
 
   draw(): void {}
+
+  public checkPointOn(point: Point): boolean {
+    return false;
+  }
 }

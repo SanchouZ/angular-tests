@@ -24,10 +24,11 @@ import {
   CPBound,
   CPClickEvent,
   CPLayer,
-  CPSVGPathOptions,
+  CPPathOptions,
   Point,
 } from './models/editor.model';
 import { CPLine } from './objects/line.mode';
+import { Rectangle } from './objects/rectangle.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
@@ -192,7 +193,6 @@ export class CanvasPainterComponent
     const mY = coords.y - this.#canvasCoords.y;
     this.#movementVector.x = mX > 0 ? Math.ceil(mX) : Math.floor(mX);
     this.#movementVector.y = mY > 0 ? Math.ceil(mY) : Math.floor(mY);
-
     this.#canvasCoords = coords;
 
     if (this.moveActive) {
@@ -464,6 +464,20 @@ export class CanvasPainterComponent
 
     this.updateSvgBounds();
     this.updateUtils();
+  }
+
+  private checkCanvasObjectIntersect(): boolean {
+    let hasIntersect = false;
+    this.#layers.forEach((layer) => {
+      layer.objects.forEach((object) => {
+        const intersect = object.checkPointOn(this.#canvasCoords);
+        if (intersect && !hasIntersect) {
+          hasIntersect = intersect;
+        }
+      });
+    });
+
+    return hasIntersect;
   }
 
   private updateMarkers(): void {

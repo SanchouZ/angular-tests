@@ -1,5 +1,5 @@
 import { ElementRef, Injectable } from '@angular/core';
-import { CPSVGPathOptions, Point, CPBound } from '../models/editor.model';
+import { CPPathOptions, Point, CPBound } from '../models/editor.model';
 
 @Injectable()
 export class CanvasPainterUtilsService {
@@ -134,7 +134,7 @@ export class CanvasPainterUtilsService {
 
   public createSVGPath(
     points: number[][] | number[][][],
-    options: CPSVGPathOptions
+    options: CPPathOptions
   ): string {
     let path = '';
 

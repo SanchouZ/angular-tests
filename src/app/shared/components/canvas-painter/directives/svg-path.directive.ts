@@ -6,7 +6,7 @@ import {
   OnInit,
   Attribute,
 } from '@angular/core';
-import { CPClickEvent, CPSVGPathOptions } from '../models/editor.model';
+import { CPClickEvent, CPPathOptions } from '../models/editor.model';
 import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 
 @Directive({
@@ -14,7 +14,7 @@ import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.serv
 })
 export class CPSVGPath {
   @Input() geometry: number[][] | number[][][];
-  @Input() options: CPSVGPathOptions;
+  @Input() options: CPPathOptions;
 
   public hover = false;
 

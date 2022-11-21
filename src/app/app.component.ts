@@ -16,7 +16,7 @@ import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-pat
 import {
   CPClickEvent,
   CPMarkerOptions,
-  CPSVGPathOptions,
+  CPPathOptions,
   Point,
 } from './shared/components/canvas-painter/models/editor.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
@@ -63,6 +63,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public markerOptions: CPMarkerOptions = {
     offsetX: -20,
     offsetY: -20,
+    editable: true,
   };
   public markers: Marker[] = [
     {
@@ -95,7 +96,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     },
   ];
 
-  public pathOptions: CPSVGPathOptions = {
+  public pathOptions: CPPathOptions = {
     strokeColor: '#ff131266',
     hoverStrokeColor: 'green',
     strokeWidth: 6,
@@ -160,9 +161,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  handleMarkerClick(): void {
-    console.log('marker click app');
-  }
+  handleMarkerClick(): void {}
 
   pathClick(evt: CPClickEvent, options: any): void {
     console.log('path click');

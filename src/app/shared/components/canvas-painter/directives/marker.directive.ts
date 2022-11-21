@@ -84,23 +84,25 @@ export class CPMarker implements OnInit {
 
   @HostListener('mousemove', ['$event'])
   private handleMouseMove(evt: MouseEvent) {
-    console.log('move click');
     if (this.options?.editable && this.moveActive) {
       const currentCanvasCoords = this.utils.canvasCoordinates;
 
       const tX = this.capturedCanvasCoords.x - currentCanvasCoords.x;
       const tY = this.capturedCanvasCoords.y - currentCanvasCoords.y;
 
-      const newMarkerCoords = this.utils.getContainerCoordinates(
-        this.capturedMarkerCoords.x - tX,
-        this.capturedMarkerCoords.y - tY
+      this.x = this.capturedMarkerCoords.x - tX;
+      this.y = this.capturedMarkerCoords.y - tY;
+
+      const newMarkerContainerCoords = this.utils.getContainerCoordinates(
+        this.x,
+        this.y
       );
 
-      this.updatePosition(newMarkerCoords);
+      this.updatePosition(newMarkerContainerCoords);
 
       this.positionUpdated.emit({
-        x: this.capturedMarkerCoords.x - tX,
-        y: this.capturedMarkerCoords.y - tY,
+        x: this.x,
+        y: this.y,
       });
 
       this.utils.redraw();
@@ -108,9 +110,9 @@ export class CPMarker implements OnInit {
   }
 
   constructor(
-    private el: ElementRef,
+    private el: ElementRef<HTMLElement>,
     private renderer: Renderer2,
-    private utils: CanvasPainterUtilsService
+    private utils: CanvasPainterUtilsService,
   ) {}
 
   ngOnInit(): void {
