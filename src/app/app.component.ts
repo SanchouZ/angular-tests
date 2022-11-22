@@ -119,6 +119,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     strokeLinejoin: 'round',
     maintainRelativeWidth: false,
     clickCalback: this.pathClick,
+    data: 'data'
   };
 
   public svgLayers: CPSVGLayers = {
@@ -225,10 +226,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   handleMarkerClick(): void {}
 
-  pathClick(evt: CPClickEvent, options: any): void {
+  pathClick(evt: CPClickEvent, data: any): void {
     console.log('path click');
     console.log(evt);
-    console.log(options);
+    console.log(data);
   }
 
   handleMarkerPositionUdpdate(position: Point, marker: Marker) {

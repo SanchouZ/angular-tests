@@ -18,7 +18,7 @@ export class CPSVGPath {
   @Input() properties: CPPathProperties;
 
   public hover = false;
-  public clickCalback: (event: CPClickEvent, data: CPPathProperties) => void;
+  public clickCalback: (event: CPClickEvent, data: any) => void;
 
   @Output() pathClick = new EventEmitter<CPClickEvent>();
   constructor(

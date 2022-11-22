@@ -56,5 +56,6 @@ export interface CPPathProperties {
   hoverFill?: string;
   maintainRelativeWidth?: boolean;
   /** SVG Only for now */
-  clickCalback?: (event: CPClickEvent, data: CPPathProperties) => void;
+  clickCalback?: (event: CPClickEvent, data: any) => void;
+  data?: any;
 }
