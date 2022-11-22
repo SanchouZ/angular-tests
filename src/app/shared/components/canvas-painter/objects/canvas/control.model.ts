@@ -1,7 +1,7 @@
-import { Point } from '../models/editor.model';
-import { CPObject } from './object.model';
+import { Point } from '../../models/editor.model';
+import { CPCanvasObject } from './object.model';
 
-export class Control extends CPObject implements Point {
+export class Control extends CPCanvasObject implements Point {
   public x: number;
   public y: number;
 

@@ -1,7 +1,7 @@
-import { Point } from '../models/editor.model';
-import { CPObject } from './object.model';
+import { Point } from '../../models/editor.model';
+import { CPCanvasObject } from './object.model';
 
-export class Rectangle extends CPObject {
+export class Rectangle extends CPCanvasObject {
   private _cornerRadius: number;
   private _points: Point[] = [];
 

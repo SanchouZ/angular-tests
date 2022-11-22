@@ -1,7 +1,7 @@
-import { CPBound, Point } from '../models/editor.model';
-import { CPObject } from './object.model';
+import { CPBound, Point } from '../../models/editor.model';
+import { CPCanvasObject } from './object.model';
 
-export class OriginGrid extends CPObject {
+export class OriginGrid extends CPCanvasObject {
   private frame: CPBound;
 
   constructor(ctx: CanvasRenderingContext2D, frame: CPBound) {

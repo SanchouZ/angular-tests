@@ -1,7 +1,7 @@
-import { CPPathOptions, Point } from '../models/editor.model';
-import { CPObject } from './object.model';
+import { CPPathOptions, Point } from '../../models/editor.model';
+import { CPCanvasObject } from './object.model';
 
-export class CPLine extends CPObject {
+export class CPLine extends CPCanvasObject {
   constructor(
     ctx: CanvasRenderingContext2D,
     private points: [Point, Point],

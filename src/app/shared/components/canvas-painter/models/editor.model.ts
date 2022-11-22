@@ -1,4 +1,4 @@
-import { CPObject } from '../objects/object.model';
+import { CPCanvasObject } from '../objects/canvas/object.model';
 
 export interface Point {
   x: number;
@@ -20,11 +20,15 @@ export interface CPClickEvent {
   frame: CPBound;
 }
 
-export interface CPLayer {
+export interface CPCanvasLayer {
   id: string;
   name: string;
   opacity: number;
-  objects: CPObject[];
+  objects: CPCanvasObject[];
+}
+
+export interface CPLayers {
+  [id: string]: CPCanvasLayer;
 }
 
 export interface CPMarkerOptions {

@@ -1,6 +1,6 @@
-import { Point } from '../models/editor.model';
+import { Point } from '../../models/editor.model';
 
-export abstract class CPObject {
+export abstract class CPCanvasObject {
   protected ctx: CanvasRenderingContext2D;
   public path: Path2D;
 

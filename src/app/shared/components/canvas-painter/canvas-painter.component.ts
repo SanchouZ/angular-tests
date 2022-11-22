@@ -1,38 +1,40 @@
 import {
-  Component,
-  ElementRef,
-  OnInit,
-  ViewChild,
-  HostListener,
   AfterViewInit,
-  Renderer2,
-  Output,
-  EventEmitter,
-  OnDestroy,
-  Input,
-  ContentChildren,
-  QueryList,
   ChangeDetectorRef,
+  Component,
+  ContentChildren,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  Renderer2,
+  ViewChild,
 } from '@angular/core';
 
-import { Subscription, fromEvent } from 'rxjs';
-import { tap, debounceTime } from 'rxjs/operators';
+import { fromEvent, Subscription } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
+
 import { fadeInOutAnimation } from './animations/fade-in-out.animation';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
 import {
   CPBound,
   CPClickEvent,
-  CPLayer,
+  CPCanvasLayer,
+  CPLayers,
   CPPathOptions,
   Point,
 } from './models/editor.model';
-import { CPLine } from './objects/line.mode';
-import { Rectangle } from './objects/rectangle.model';
+import { CPLine } from './objects/canvas/line.mode';
+import { Rectangle } from './objects/canvas/rectangle.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
-  selector: 'app-canvas-painter',
+  selector: 'mf-canvas-painter',
   templateUrl: './canvas-painter.component.html',
   styleUrls: ['./canvas-painter.component.scss'],
   animations: [fadeInOutAnimation],
@@ -77,9 +79,12 @@ export class CanvasPainterComponent
   @Input() maintainRelativeWidth = false;
   @Input() maxZoom = 20;
 
-  @Input() set layers(layers: CPLayer[]) {
+  @Input() set layers(layers: CPLayers) {
     if (layers) {
-      this.#layers = layers;
+      this.#layers = {
+        ...this.layers,
+        ...layers,
+      };
       this.redraw();
     }
   }
@@ -136,6 +141,30 @@ export class CanvasPainterComponent
   @ContentChildren(CPMarker) markers: QueryList<CPMarker>;
   @ContentChildren(CPSVGPath) svgPaths: QueryList<CPSVGPath>;
 
+  private ctx: CanvasRenderingContext2D;
+
+  private imageEntryPoint: Point = { x: 0, y: 0 };
+  private clicks: Point[] = [];
+  private showSin = false;
+  private showCos = false;
+
+  private imageBackground: HTMLImageElement;
+
+  private moveStart: Point = { x: 0, y: 0 };
+  private moveActive = false;
+
+  #layers: CPLayers = {};
+  #canvasCoords: Point = { x: 0, y: 0 };
+  #screenCoords: Point = { x: 0, y: 0 };
+  #movementVector: Point = { x: 0, y: 0 };
+  #canvasFrame: CPBound;
+  #holdBound: CPBound;
+  #zoom: number;
+
+  private sub = new Subscription();
+
+  public isLoading = false;
+
   @HostListener('window:resize', ['$event'])
   public validateCanvas() {
     const { a, b, c, d, e, f } = this.ctx.getTransform();
@@ -151,7 +180,6 @@ export class CanvasPainterComponent
       evt.clientX,
       evt.clientY
     );
-    console.log(evt);
     this.canvasClick.emit({
       zoom: this.zoom,
       canvasCoordinates: canvasPoint,
@@ -242,34 +270,8 @@ export class CanvasPainterComponent
         container.x + container.width / 2,
         container.y + container.height / 2
       );
-      console.log(container);
-      console.log(centerPoint);
     }
   }
-
-  private ctx: CanvasRenderingContext2D;
-
-  private imageEntryPoint: Point = { x: 0, y: 0 };
-  private clicks: Point[] = [];
-  private showSin = false;
-  private showCos = false;
-
-  private imageBackground: HTMLImageElement;
-
-  private moveStart: Point = { x: 0, y: 0 };
-  private moveActive = false;
-
-  #layers: CPLayer[] = [];
-  #canvasCoords: Point = { x: 0, y: 0 };
-  #screenCoords: Point = { x: 0, y: 0 };
-  #movementVector: Point = { x: 0, y: 0 };
-  #canvasFrame: CPBound;
-  #holdBound: CPBound;
-  #zoom: number;
-
-  private sub = new Subscription();
-
-  public isLoading = false;
 
   constructor(
     public utils: CanvasPainterUtilsService,
@@ -278,7 +280,7 @@ export class CanvasPainterComponent
   ) {}
 
   ngOnInit(): void {
-    this.ctx = this.canvas.nativeElement.getContext('2d')!;
+    this.ctx = this.canvas.nativeElement.getContext('2d');
 
     if (this.ctx) {
       this.utils.ctx = this.ctx;
@@ -307,16 +309,33 @@ export class CanvasPainterComponent
   }
 
   ngAfterViewInit(): void {
+    this.updateCanvasBounds();
+    this.redraw();
+
     this.sub.add(
       this.markers.changes.pipe(tap(() => this.redraw())).subscribe()
     );
     this.sub.add(
       this.markers.changes.pipe(tap(() => this.cd.detectChanges())).subscribe()
     );
+
+    console.log(new CPSVGPath('', this.utils));
   }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+  }
+
+  public addCanvasLayer(id: string, layerData: CPCanvasLayer) {
+    this.layers[id] = layerData;
+    this.redraw();
+  }
+
+  public removeCanvasLayer(id: string) {
+    if (id in this.#layers) {
+      delete this.#layers[id];
+    }
+    this.redraw();
   }
 
   public getEventInfo(): CPClickEvent {
@@ -350,6 +369,7 @@ export class CanvasPainterComponent
     return this.#canvasFrame;
   }
 
+  // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
   public get zoom(): number {
     return this.#zoom;
   }
@@ -367,8 +387,8 @@ export class CanvasPainterComponent
     const bounds = this.canvasContainer.nativeElement.getBoundingClientRect();
     const aspectRatio = bounds.height / bounds.width;
 
-    let width = (bounds.height / aspectRatio) * devicePixelRatio;
-    let height = bounds.height * devicePixelRatio;
+    const width = (bounds.height / aspectRatio) * devicePixelRatio;
+    const height = bounds.height * devicePixelRatio;
 
     this.renderer.setAttribute(this.canvas.nativeElement, 'width', `${width}`);
 
@@ -441,7 +461,7 @@ export class CanvasPainterComponent
 
     this.drawBackgroundImage();
 
-    this.#layers.forEach((layer) => {
+    Object.values(this.#layers).forEach((layer) => {
       layer.objects.forEach((object) => object.draw());
     });
 
@@ -468,7 +488,7 @@ export class CanvasPainterComponent
 
   private checkCanvasObjectIntersect(): boolean {
     let hasIntersect = false;
-    this.#layers.forEach((layer) => {
+    Object.values(this.#layers).forEach((layer) => {
       layer.objects.forEach((object) => {
         const intersect = object.checkPointOn(this.#canvasCoords);
         if (intersect && !hasIntersect) {
@@ -494,7 +514,7 @@ export class CanvasPainterComponent
     });
 
     if (hasLinks) {
-      this.createMarkerLinks('markers', false);
+      this.createMarkerLinks('markers-lines', false);
     }
   }
 
@@ -539,17 +559,19 @@ export class CanvasPainterComponent
       }
     });
 
-    const layer = this.#layers.find((layer) => layer.name === layerName);
+    const layer = this.#layers[layerName];
     if (layer) {
       layer.objects = lines;
     } else {
-      this.#layers.push({
+      this.#layers[layerName] = {
         id: performance.now().toFixed(0),
         name: layerName,
         opacity: 1,
         objects: lines,
-      });
+      };
     }
+
+    console.log(this.#layers);
   }
 
   private drawBackgroundImage(): void {
@@ -572,7 +594,7 @@ export class CanvasPainterComponent
       return;
     }
     let transform = this.ctx.getTransform();
-    let transformInv = this.ctx.getTransform().inverse();
+    const transformInv = this.ctx.getTransform().inverse();
 
     const zoomX = this.#canvasFrame.width / bound.width;
     const zoomY = this.#canvasFrame.height / bound.height;

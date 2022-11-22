@@ -1,5 +1,6 @@
-import { NO_ERRORS_SCHEMA, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgModule,NO_ERRORS_SCHEMA } from '@angular/core';
+
 import { CanvasPainterComponent } from './canvas-painter.component';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';

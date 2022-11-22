@@ -1,11 +1,12 @@
 import {
-  Directive,
-  Input,
-  Output,
-  EventEmitter,
-  OnInit,
   Attribute,
+  Directive,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
 } from '@angular/core';
+
 import { CPClickEvent, CPPathOptions } from '../models/editor.model';
 import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 

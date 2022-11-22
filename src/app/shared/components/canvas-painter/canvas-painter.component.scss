@@ -1,4 +1,4 @@
-@use "sass:color";
+@use 'sass:color';
 
 :host {
   width: 100%;
@@ -12,6 +12,8 @@
   min-width: 100%;
   min-height: 100%;
   overflow: hidden;
+  background-color: white;
+  z-index: 3000;
 
   &__canvas {
     position: absolute;

@@ -1,13 +1,14 @@
 import {
   Directive,
+  ElementRef,
+  EventEmitter,
+  HostListener,
   Input,
+  OnInit,
   Output,
   Renderer2,
-  OnInit,
-  ElementRef,
-  HostListener,
-  EventEmitter,
 } from '@angular/core';
+
 import { CPMarkerOptions, Point } from '../models/editor.model';
 import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 

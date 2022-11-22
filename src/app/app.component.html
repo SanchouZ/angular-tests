@@ -3,7 +3,7 @@
   <main>
     <nav></nav>
     <div class="canvas">
-      <app-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
+      <mf-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
         [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 
@@ -34,7 +34,7 @@
           (positionUpdated)="handleMarkerPositionUdpdate($event, marker)">{{ marker.value }}
         </div> -->
 
-      </app-canvas-painter>
+      </mf-canvas-painter>
 
       <div class="tools-right">
         <mat-button-toggle-group [value]="currentImageIndex" aria-label="Plans" (change)="changeImage($event)">
