@@ -25,9 +25,10 @@ import {
   CPBound,
   CPClickEvent,
   CPCanvasLayer,
-  CPLayers,
+  CPCanvasLayers,
   CPPathOptions,
   Point,
+  CPSVGLayers,
 } from './models/editor.model';
 import { CPLine } from './objects/canvas/line.mode';
 import { Rectangle } from './objects/canvas/rectangle.model';
@@ -79,13 +80,19 @@ export class CanvasPainterComponent
   @Input() maintainRelativeWidth = false;
   @Input() maxZoom = 20;
 
-  @Input() set layers(layers: CPLayers) {
+  @Input() set layersCanvas(layers: CPCanvasLayers) {
     if (layers) {
-      this.#layers = {
-        ...this.layers,
+      this.#layersCanvas = {
+        ...this.#layersCanvas,
         ...layers,
       };
       this.redraw();
+    }
+  }
+
+  @Input() set layersSVG(layers: CPSVGLayers) {
+    if (layers) {
+      this.createSVGLayers(layers);
     }
   }
 
@@ -153,7 +160,8 @@ export class CanvasPainterComponent
   private moveStart: Point = { x: 0, y: 0 };
   private moveActive = false;
 
-  #layers: CPLayers = {};
+  #layersCanvas: CPCanvasLayers = {};
+  #layersSVG: CPSVGLayers = {};
   #canvasCoords: Point = { x: 0, y: 0 };
   #screenCoords: Point = { x: 0, y: 0 };
   #movementVector: Point = { x: 0, y: 0 };
@@ -327,13 +335,13 @@ export class CanvasPainterComponent
   }
 
   public addCanvasLayer(id: string, layerData: CPCanvasLayer) {
-    this.layers[id] = layerData;
+    this.#layersCanvas[id] = layerData;
     this.redraw();
   }
 
   public removeCanvasLayer(id: string) {
-    if (id in this.#layers) {
-      delete this.#layers[id];
+    if (id in this.#layersCanvas) {
+      delete this.#layersCanvas[id];
     }
     this.redraw();
   }
@@ -381,6 +389,13 @@ export class CanvasPainterComponent
   public toogleLoadingState(): void {
     this.isLoading = !this.isLoading;
     this.loading.emit(this.isLoading);
+  }
+
+  private createSVGLayers(layers: CPSVGLayers) {
+    this.#layersSVG = {
+      ...this.#layersSVG,
+      ...layers,
+    };
   }
 
   private updateCanvasBounds(): void {
@@ -461,7 +476,7 @@ export class CanvasPainterComponent
 
     this.drawBackgroundImage();
 
-    Object.values(this.#layers).forEach((layer) => {
+    Object.values(this.#layersCanvas).forEach((layer) => {
       layer.objects.forEach((object) => object.draw());
     });
 
@@ -488,7 +503,7 @@ export class CanvasPainterComponent
 
   private checkCanvasObjectIntersect(): boolean {
     let hasIntersect = false;
-    Object.values(this.#layers).forEach((layer) => {
+    Object.values(this.#layersCanvas).forEach((layer) => {
       layer.objects.forEach((object) => {
         const intersect = object.checkPointOn(this.#canvasCoords);
         if (intersect && !hasIntersect) {
@@ -559,11 +574,11 @@ export class CanvasPainterComponent
       }
     });
 
-    const layer = this.#layers[layerName];
+    const layer = this.#layersCanvas[layerName];
     if (layer) {
       layer.objects = lines;
     } else {
-      this.#layers[layerName] = {
+      this.#layersCanvas[layerName] = {
         id: performance.now().toFixed(0),
         name: layerName,
         opacity: 1,
@@ -571,7 +586,7 @@ export class CanvasPainterComponent
       };
     }
 
-    console.log(this.#layers);
+    console.log(this.#layersCanvas);
   }
 
   private drawBackgroundImage(): void {

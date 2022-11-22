@@ -1,4 +1,6 @@
+
 import { CPCanvasObject } from '../objects/canvas/object.model';
+import { CPSVGObject } from '../objects/svg/object.model';
 
 export interface Point {
   x: number;
@@ -20,15 +22,26 @@ export interface CPClickEvent {
   frame: CPBound;
 }
 
-export interface CPCanvasLayer {
+interface CPLayer {
   id: string;
   name: string;
   opacity: number;
+}
+
+export interface CPCanvasLayer extends CPLayer {
   objects: CPCanvasObject[];
 }
 
-export interface CPLayers {
+export interface CPCanvasLayers {
   [id: string]: CPCanvasLayer;
+}
+
+export interface CPSVGLayer extends CPLayer {
+  objects: CPSVGObject[];
+}
+
+export interface CPSVGLayers {
+  [id: string]: CPSVGLayer;
 }
 
 export interface CPMarkerOptions {
