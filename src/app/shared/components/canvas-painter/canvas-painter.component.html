@@ -12,20 +12,23 @@
         <g>
             <ng-content select="[cpSvg]"></ng-content>
         </g>
-        <g>
-            <ng-container *ngFor="let path of svgPaths">
-                <path class="cp-path" [ngClass]="path.hostClass"
-                    [attr.d]="utils.createSVGPath(path.geometry, path.options)"
-                    [attr.stroke]="path.hover ? path.options?.hoverStrokeColor ?? path.options?.strokeColor ?? 'black' : path.options?.strokeColor ?? 'black'"
-                    [attr.stroke-width]="(path.hover ? path.options?.hoverStrokeWidth ?? path.options?.strokeWidth ?? 2 : path.options?.strokeWidth ?? 2) * (path.options?.maintainRelativeWidth || maintainRelativeWidth ? 1 / zoom : 1)"
-                    [attr.stroke-linecap]="path.options?.strokeLineCap ?? 'butt'"
-                    [attr.stroke-linejoin]="path.options?.strokeLinejoin ?? 'miter'"
-                    [attr.fill]="path.hover ? path.options?.hoverFill ?? path.options?.fill ?? 'none' : path.options?.fill ?? 'none'"
-                    (click)="path.pathClick.emit(getEventInfo())" (mouseenter)="path.hover = true"
-                    (mouseleave)="path.hover = false">
-                </path>
-            </ng-container>
-        </g>
+        <ng-container *ngFor="let layer of svgElements  | keyvalue">
+            <g [ngStyle]="{opacity: layer.value.opacity}" [attr.data-layer-id]="layer.value.id"
+                [attr.data-layer-name]="layer.value.name">
+                <ng-container *ngFor="let path of layer.value.objects">
+                    <path class="cp-path" [ngClass]="path.hostClass"
+                        [attr.d]="utils.createSVGPath(path.geometry, path.properties)"
+                        [attr.stroke]="path.hover ? path.properties?.hoverStrokeColor ?? path.properties?.strokeColor ?? 'black' : path.properties?.strokeColor ?? 'black'"
+                        [attr.stroke-width]="(path.hover ? path.properties?.hoverStrokeWidth ?? path.properties?.strokeWidth ?? 2 : path.properties?.strokeWidth ?? 2) * (path.properties?.maintainRelativeWidth || maintainRelativeWidth ? 1 / zoom : 1)"
+                        [attr.stroke-linecap]="path.properties?.strokeLineCap ?? 'butt'"
+                        [attr.stroke-linejoin]="path.properties?.strokeLinejoin ?? 'miter'"
+                        [attr.fill]="path.hover ? path.properties?.hoverFill ?? path.properties?.fill ?? 'none' : path.properties?.fill ?? 'none'"
+                        (click)="path.clickCalback ? path.clickCalback(getEventInfo(), path.properties) : path.pathClick.emit(getEventInfo())"
+                        (mouseenter)="path.hover = true" (mouseleave)="path.hover = false">
+                    </path>
+                </ng-container>
+            </g>
+        </ng-container>
     </svg>
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>

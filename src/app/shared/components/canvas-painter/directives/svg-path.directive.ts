@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 
-import { CPClickEvent, CPPathOptions } from '../models/editor.model';
+import { CPClickEvent, CPPathProperties } from '../models/editor.model';
 import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 
 @Directive({
@@ -15,9 +15,10 @@ import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.serv
 })
 export class CPSVGPath {
   @Input() geometry: number[][] | number[][][];
-  @Input() options: CPPathOptions;
+  @Input() properties: CPPathProperties;
 
   public hover = false;
+  public clickCalback: (event: CPClickEvent, data: CPPathProperties) => void;
 
   @Output() pathClick = new EventEmitter<CPClickEvent>();
   constructor(

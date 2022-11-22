@@ -15,10 +15,14 @@ import { CanvasPainterComponent } from './shared/components/canvas-painter/canva
 import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-path.directive';
 import {
   CPClickEvent,
-  CPMarkerOptions,
-  CPPathOptions,
+  CPMarkerProperties,
+  CPPathProperties,
+  CPSVGLayer,
+  CPSVGLayers,
   Point,
 } from './shared/components/canvas-painter/models/editor.model';
+import { CPSVGObject } from './shared/components/canvas-painter/objects/svg/object.model';
+import { CPPath } from './shared/components/canvas-painter/objects/svg/path.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
 
 interface Marker {
@@ -60,7 +64,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public currentImageIndex = 1;
 
   public isMarkersAddMode = false;
-  public markerOptions: CPMarkerOptions = {
+  public markerOptions: CPMarkerProperties = {
     offsetX: -20,
     offsetY: -20,
     editable: true,
@@ -96,7 +100,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     },
   ];
 
-  public pathOptions: CPPathOptions = {
+  public pathOptions: CPPathProperties = {
     strokeColor: '#ff131266',
     hoverStrokeColor: 'green',
     strokeWidth: 6,
@@ -104,6 +108,51 @@ export class AppComponent implements OnInit, AfterViewInit {
     strokeLineCap: 'round',
     strokeLinejoin: 'round',
     maintainRelativeWidth: false,
+  };
+
+  public pathOptionsTest: CPPathProperties = {
+    strokeColor: '#2f61a066',
+    hoverStrokeColor: 'green',
+    strokeWidth: 6,
+    hoverStrokeWidth: 12,
+    strokeLineCap: 'round',
+    strokeLinejoin: 'round',
+    maintainRelativeWidth: false,
+    clickCalback: this.pathClick,
+  };
+
+  public svgLayers: CPSVGLayers = {
+    test: {
+      id: 'test',
+      name: 'test',
+      opacity: 1,
+      objects: [
+        new CPPath(
+          [
+            [400, 400],
+            [620, 420],
+            [510, 450],
+          ],
+          this.pathOptionsTest
+        ),
+      ],
+    },
+  };
+
+  public svgLayer: CPSVGLayer = {
+    id: 'test1',
+    name: 'test1',
+    opacity: 1,
+    objects: [
+      new CPPath(
+        [
+          [400, 700],
+          [620, 720],
+          [510, 750],
+        ],
+        this.pathOptionsTest
+      ),
+    ],
   };
 
   constructor(private renderer: Renderer2) {}
@@ -142,7 +191,20 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.imageURL$.next(this.images[evt.value]);
   }
 
-  public onCanvasReady(canvas: CanvasPainterComponent) {}
+  public onCanvasReady(canvas: CanvasPainterComponent) {
+    const layer = this.svgLayer;
+    // canvas.addSVGLayer(this.svgLayer);
+
+    setTimeout(() => {
+      // console.log('remove layer');
+      // canvas.removeSVGLayer('test1');
+      this.svgLayers = {
+        ...this.svgLayers,
+        layer,
+      };
+      console.log(this.svgLayers);
+    }, 5000);
+  }
 
   onChangeZoom(zoom: number): void {
     this.zoom = zoom;

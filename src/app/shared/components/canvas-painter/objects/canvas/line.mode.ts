@@ -1,11 +1,11 @@
-import { CPPathOptions, Point } from '../../models/editor.model';
+import { CPPathProperties, Point } from '../../models/editor.model';
 import { CPCanvasObject } from './object.model';
 
 export class CPLine extends CPCanvasObject {
   constructor(
     ctx: CanvasRenderingContext2D,
     private points: [Point, Point],
-    public options?: CPPathOptions
+    public properties?: CPPathProperties
   ) {
     super(ctx);
     this.path = new Path2D();
@@ -25,11 +25,11 @@ export class CPLine extends CPCanvasObject {
       }
     });
 
-    if (this.options?.closed) {
+    if (this.properties?.closed) {
       this.path.closePath();
     }
-    let lineWidth = (this.options?.strokeWidth ?? 4) * devicePixelRatio;
-    if (this.options?.maintainRelativeWidth) {
+    let lineWidth = (this.properties?.strokeWidth ?? 4) * devicePixelRatio;
+    if (this.properties?.maintainRelativeWidth) {
       const { a } = this.ctx.getTransform().inverse();
       lineWidth *= a;
     }
@@ -37,7 +37,7 @@ export class CPLine extends CPCanvasObject {
     this.ctx.lineWidth = lineWidth;
     this.ctx.strokeStyle = this.isPointInStroke
       ? 'red'
-      : this.options?.strokeColor ?? 'blue';
+      : this.properties?.strokeColor ?? 'blue';
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);

@@ -1,6 +1,6 @@
-
 import { CPCanvasObject } from '../objects/canvas/object.model';
 import { CPSVGObject } from '../objects/svg/object.model';
+import { CPLayer } from './editor-only.model';
 
 export interface Point {
   x: number;
@@ -22,12 +22,6 @@ export interface CPClickEvent {
   frame: CPBound;
 }
 
-interface CPLayer {
-  id: string;
-  name: string;
-  opacity: number;
-}
-
 export interface CPCanvasLayer extends CPLayer {
   objects: CPCanvasObject[];
 }
@@ -44,13 +38,13 @@ export interface CPSVGLayers {
   [id: string]: CPSVGLayer;
 }
 
-export interface CPMarkerOptions {
+export interface CPMarkerProperties {
   offsetX?: number;
   offsetY?: number;
   editable?: boolean;
 }
 
-export interface CPPathOptions {
+export interface CPPathProperties {
   closed?: boolean;
   strokeWidth?: number;
   strokeColor?: string;
@@ -61,4 +55,6 @@ export interface CPPathOptions {
   fill?: string;
   hoverFill?: string;
   maintainRelativeWidth?: boolean;
+  /** SVG Only for now */
+  clickCalback?: (event: CPClickEvent, data: CPPathProperties) => void;
 }

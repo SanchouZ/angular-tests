@@ -4,7 +4,7 @@
     <nav></nav>
     <div class="canvas">
       <mf-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" (canvasReady)="onCanvasReady($event)"
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 
         <div class="loader" loader>
@@ -14,23 +14,23 @@
         </div>
 
         <cp-svg-path [geometry]="[[[0,0], [100,100], [200,-300], [420,150]], [[420,150], [400,500], [278,500]]]"
-          [options]="pathOptions" (pathClick)="pathClick($event, pathOptions)">
+          [properties]="pathOptions" (pathClick)="pathClick($event, pathOptions)">
         </cp-svg-path>
-        <!-- <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
+        <!-- <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [properties]="pathOptions" (pathClick)="pathClick()">
             </cp-svg-path> -->
 
-        <!-- <cp-svg-path [geometry]="[[0,0], [100,100], [200,-300]]" [options]="pathOptions" (pathClick)="pathClick()">
+        <!-- <cp-svg-path [geometry]="[[0,0], [100,100], [200,-300]]" [properties]="pathOptions" (pathClick)="pathClick()">
             </cp-svg-path>
-            <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [options]="pathOptions" (pathClick)="pathClick()">
+            <cp-svg-path [geometry]="[[120,150], [400,500], [278,500]]" [properties]="pathOptions" (pathClick)="pathClick()">
             </cp-svg-path> -->
 
-        <cp-svg-path [geometry]="[[400,400], [620,420], [510,450]]" [options]="pathOptions"></cp-svg-path>
-        <cp-svg-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [options]="pathOptions"></cp-svg-path>
-        <cp-svg-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [options]="pathOptions"></cp-svg-path>
-        <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [options]="pathOptions"></cp-svg-path>
+        <!-- <cp-svg-path [geometry]="[[400,400], [620,420], [510,450]]" [properties]="pathOptions"></cp-svg-path> -->
+        <cp-svg-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [properties]="pathOptions"></cp-svg-path>
+        <cp-svg-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [properties]="pathOptions"></cp-svg-path>
+        <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [properties]="pathOptions"></cp-svg-path>
 
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
-          [linkedMarkers]="marker.links" [options]="markerOptions" class="marker" (click)="handleMarkerClick()"
+          [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"
           (positionUpdated)="handleMarkerPositionUdpdate($event, marker)">{{ marker.value }}
         </div> -->
 

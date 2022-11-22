@@ -15,23 +15,23 @@ import {
   ViewChild,
 } from '@angular/core';
 
-import { fromEvent, Subscription } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import { fadeInOutAnimation } from './animations/fade-in-out.animation';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
+import { SceneSVGLayers } from './models/editor-only.model';
 import {
   CPBound,
   CPClickEvent,
   CPCanvasLayer,
   CPCanvasLayers,
-  CPPathOptions,
   Point,
   CPSVGLayers,
+  CPSVGLayer,
 } from './models/editor.model';
 import { CPLine } from './objects/canvas/line.mode';
-import { Rectangle } from './objects/canvas/rectangle.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
@@ -92,7 +92,7 @@ export class CanvasPainterComponent
 
   @Input() set layersSVG(layers: CPSVGLayers) {
     if (layers) {
-      this.createSVGLayers(layers);
+      Object.values(layers).forEach((layer) => this.createSVGLayer(layer));
     }
   }
 
@@ -152,6 +152,7 @@ export class CanvasPainterComponent
 
   private imageEntryPoint: Point = { x: 0, y: 0 };
   private clicks: Point[] = [];
+  private templateSvgLayerId = 'fr_tmp';
   private showSin = false;
   private showCos = false;
 
@@ -161,7 +162,7 @@ export class CanvasPainterComponent
   private moveActive = false;
 
   #layersCanvas: CPCanvasLayers = {};
-  #layersSVG: CPSVGLayers = {};
+  #layersSVG: SceneSVGLayers = {};
   #canvasCoords: Point = { x: 0, y: 0 };
   #screenCoords: Point = { x: 0, y: 0 };
   #movementVector: Point = { x: 0, y: 0 };
@@ -319,15 +320,16 @@ export class CanvasPainterComponent
   ngAfterViewInit(): void {
     this.updateCanvasBounds();
     this.redraw();
+    this.createSVGLayerFromTemplate();
 
     this.sub.add(
       this.markers.changes.pipe(tap(() => this.redraw())).subscribe()
     );
     this.sub.add(
-      this.markers.changes.pipe(tap(() => this.cd.detectChanges())).subscribe()
+      this.markers.changes
+        .pipe(tap(() => this.createSVGLayerFromTemplate()))
+        .subscribe()
     );
-
-    console.log(new CPSVGPath('', this.utils));
   }
 
   ngOnDestroy(): void {
@@ -342,8 +344,19 @@ export class CanvasPainterComponent
   public removeCanvasLayer(id: string) {
     if (id in this.#layersCanvas) {
       delete this.#layersCanvas[id];
+      this.redraw();
     }
-    this.redraw();
+  }
+
+  public addSVGLayer(layer: CPSVGLayer) {
+    this.createSVGLayer(layer);
+  }
+
+  public removeSVGLayer(id: string) {
+    if (id in this.#layersSVG) {
+      delete this.#layersSVG[id];
+      this.#layersSVG = { ...this.#layersSVG };
+    }
   }
 
   public getEventInfo(): CPClickEvent {
@@ -391,10 +404,31 @@ export class CanvasPainterComponent
     this.loading.emit(this.isLoading);
   }
 
-  private createSVGLayers(layers: CPSVGLayers) {
-    this.#layersSVG = {
-      ...this.#layersSVG,
-      ...layers,
+  get svgElements(): SceneSVGLayers {
+    return this.#layersSVG;
+  }
+
+  private createSVGLayerFromTemplate(): void {
+    if (this.svgPaths) {
+      this.#layersSVG[this.templateSvgLayerId] = {
+        id: this.templateSvgLayerId,
+        name: this.templateSvgLayerId,
+        opacity: 1,
+        objects: this.svgPaths.toArray(),
+      };
+    }
+  }
+
+  private createSVGLayer(layer: CPSVGLayer): void {
+    this.#layersSVG[layer.id] = {
+      ...layer,
+      objects: layer.objects.map((object) => {
+        const svgHost = new CPSVGPath('', this.utils);
+        svgHost.geometry = object.geometry;
+        svgHost.properties = object.properties;
+        svgHost.clickCalback = object.properties.clickCalback;
+        return svgHost;
+      }),
     };
   }
 
@@ -585,8 +619,6 @@ export class CanvasPainterComponent
         objects: lines,
       };
     }
-
-    console.log(this.#layersCanvas);
   }
 
   private drawBackgroundImage(): void {
