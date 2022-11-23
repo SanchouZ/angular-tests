@@ -7,6 +7,7 @@ import {
   EventEmitter,
   HostListener,
   Input,
+  NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -153,6 +154,8 @@ export class CanvasPainterComponent
   private imageEntryPoint: Point = { x: 0, y: 0 };
   private clicks: Point[] = [];
   private templateSvgLayerId = 'fr_tmp';
+  private markersLayerId = 'markers-lines';
+  private markersHasLinks = false;
   private showSin = false;
   private showCos = false;
 
@@ -285,7 +288,8 @@ export class CanvasPainterComponent
   constructor(
     public utils: CanvasPainterUtilsService,
     private renderer: Renderer2,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -319,11 +323,31 @@ export class CanvasPainterComponent
 
   ngAfterViewInit(): void {
     this.updateCanvasBounds();
+    this.createMarkerLinks();
     this.redraw();
     this.createSVGLayerFromTemplate();
 
+    this.zone.runOutsideAngular(() => {
+      this.canvasContainer.nativeElement.addEventListener(
+        'mousemove',
+        (evt: MouseEvent) => {
+          const coords = this.utils.getCanvasCoordinates(
+            evt.screenX,
+            evt.screenY
+          );
+          if (this.checkCanvasObjectIntersect(this.#canvasCoords)) {
+            console.log('redraw');
+            this.redraw();
+            this.canvasContainer.nativeElement.style.cursor = 'pointer';
+          } else {
+            this.canvasContainer.nativeElement.style.cursor = 'auto';
+          }
+        }
+      );
+    });
+
     this.sub.add(
-      this.markers.changes.pipe(tap(() => this.redraw())).subscribe()
+      this.markers.changes.pipe(tap(() => this.createMarkerLinks())).subscribe()
     );
     this.sub.add(
       this.markers.changes
@@ -486,71 +510,80 @@ export class CanvasPainterComponent
     forceZoomCheck: boolean = false,
     emitZoom: boolean = true
   ): void {
-    this.#canvasFrame = this.getCanvasFrame();
+    this.zone.runOutsideAngular(() => {
+      this.#canvasFrame = this.getCanvasFrame();
 
-    if (this.#holdBound && this.holdZoomToImage) {
-      this.holdToBound(this.#holdBound, forceZoomCheck);
-    }
+      if (this.#holdBound && this.holdZoomToImage) {
+        this.holdToBound(this.#holdBound, forceZoomCheck);
+      }
 
-    this.ctx.save();
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.clearRect(
-      0,
-      0,
-      this.canvas.nativeElement.width,
-      this.canvas.nativeElement.height
-    );
-    this.ctx.restore();
+      this.ctx.save();
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      this.ctx.clearRect(
+        0,
+        0,
+        this.canvas.nativeElement.width,
+        this.canvas.nativeElement.height
+      );
+      this.ctx.restore();
 
-    this.updateMarkers();
+      this.updateMarkers();
 
-    if (this.showOriginLines) {
-      this.drawOriginLines();
-    }
+      if (this.showOriginLines) {
+        this.drawOriginLines();
+      }
 
-    this.drawBackgroundImage();
+      this.drawBackgroundImage();
 
-    Object.values(this.#layersCanvas).forEach((layer) => {
-      layer.objects.forEach((object) => object.draw());
+      Object.values(this.#layersCanvas).forEach((layer) => {
+        layer.objects.forEach((object) => object.draw());
+      });
+
+      this.clicks.forEach((click) => {
+        this.drawArc(click.x, click.y);
+      });
+
+      if (this.showSin) {
+        this.drawSin();
+      }
+
+      if (this.showCos) {
+        this.drawCos();
+      }
+
+      this.#canvasFrame = this.getCanvasFrame();
+      if (emitZoom) {
+        this.zoomChange.emit(this.zoom);
+      }
+
+      this.updateSvgBounds();
+      this.updateUtils();
     });
-
-    this.clicks.forEach((click) => {
-      this.drawArc(click.x, click.y);
-    });
-
-    if (this.showSin) {
-      this.drawSin();
-    }
-
-    if (this.showCos) {
-      this.drawCos();
-    }
-
-    this.#canvasFrame = this.getCanvasFrame();
-    if (emitZoom) {
-      this.zoomChange.emit(this.zoom);
-    }
-
-    this.updateSvgBounds();
-    this.updateUtils();
   }
 
-  private checkCanvasObjectIntersect(): boolean {
-    let hasIntersect = false;
+  private checkCanvasObjectIntersect(point: Point): boolean {
+    this.ctx.save();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    let redraw = false;
     Object.values(this.#layersCanvas).forEach((layer) => {
       layer.objects.forEach((object) => {
-        const intersect = object.checkPointOn(this.#canvasCoords);
-        if (intersect && !hasIntersect) {
-          hasIntersect = intersect;
+        if (object.isPointInPath || object.isPointInStroke) {
+          redraw = true;
+        }
+
+        const intersect = object.checkPointOn(point);
+        if (intersect && !redraw) {
+          redraw = true;
         }
       });
     });
-
-    return hasIntersect;
+    this.ctx.restore();
+    return redraw;
   }
 
   private updateMarkers(): void {
-    let hasLinks = false;
+    this.markersHasLinks = false;
     this.markers?.forEach((marker) => {
       const containerCoords = this.utils.getContainerCoordinates(
         marker.x,
@@ -558,20 +591,15 @@ export class CanvasPainterComponent
       );
       marker.updatePosition(containerCoords);
       if (marker.linkedMarkers && marker.linkedMarkers.length > 0) {
-        hasLinks = true;
+        this.markersHasLinks = true;
       }
     });
-
-    if (hasLinks) {
-      this.createMarkerLinks('markers-lines', false);
-    }
   }
 
-  private createMarkerLinks(
-    layerName: string,
-    maintainRelativeWidth?: boolean
-  ): void {
+  private createMarkerLinks(): void {
     const alreadyProcced = new Set<number>();
+
+    const layer = this.#layersCanvas[this.markersLayerId];
 
     const lines: CPLine[] = [];
     this.markers?.forEach((marker) => {
@@ -599,8 +627,9 @@ export class CanvasPainterComponent
                 { x: linkedMarker.x, y: linkedMarker.y },
               ],
               {
-                maintainRelativeWidth:
-                  maintainRelativeWidth || this.maintainRelativeWidth,
+                strokeWidth: 10,
+                hoverStrokeColor: 'green',
+                maintainRelativeWidth: this.maintainRelativeWidth,
               }
             )
           );
@@ -608,13 +637,12 @@ export class CanvasPainterComponent
       }
     });
 
-    const layer = this.#layersCanvas[layerName];
     if (layer) {
       layer.objects = lines;
     } else {
-      this.#layersCanvas[layerName] = {
+      this.#layersCanvas[this.markersLayerId] = {
         id: performance.now().toFixed(0),
-        name: layerName,
+        name: this.markersLayerId,
         opacity: 1,
         objects: lines,
       };
@@ -625,7 +653,6 @@ export class CanvasPainterComponent
     if (!this.imageBackground) {
       return;
     }
-
     this.ctx.save();
     this.ctx.rotate((0 * Math.PI) / 180);
     this.ctx.drawImage(
@@ -802,21 +829,19 @@ export class CanvasPainterComponent
     const frame = this.getCanvasFrame();
     const scale = this.ctx.getTransform().inverse().a;
     // X
-    this.ctx.save();
+
     this.ctx.beginPath();
     this.ctx.lineWidth = 2 * scale * devicePixelRatio;
     this.ctx.moveTo(frame.topLeft.x, 0);
     this.ctx.lineTo(frame.bottomRight.x, 0);
     this.ctx.strokeStyle = '#d60100';
     this.ctx.stroke();
-    this.ctx.save();
-    this.ctx.restore();
+
     // Y
     this.ctx.beginPath();
     this.ctx.moveTo(0, frame.topLeft.y);
     this.ctx.lineTo(0, frame.bottomRight.y);
     this.ctx.strokeStyle = '#46b145';
     this.ctx.stroke();
-    this.ctx.restore();
   }
 }

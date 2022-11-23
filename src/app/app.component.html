@@ -3,7 +3,7 @@
   <main>
     <nav></nav>
     <div class="canvas">
-      <mf-canvas-painter [showDebugPanel]="false" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
+      <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
         [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 

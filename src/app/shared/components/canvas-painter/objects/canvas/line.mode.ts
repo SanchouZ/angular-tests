@@ -12,8 +12,6 @@ export class CPLine extends CPCanvasObject {
   }
 
   draw(): void {
-    this.ctx.save();
-
     this.path = new Path2D();
     this.ctx.beginPath();
 
@@ -28,22 +26,27 @@ export class CPLine extends CPCanvasObject {
     if (this.properties?.closed) {
       this.path.closePath();
     }
-    let lineWidth = (this.properties?.strokeWidth ?? 4) * devicePixelRatio;
+    let lineWidth =
+      (this.isPointInStroke || this.isPointInPath
+        ? this.properties?.hoverStrokeWidth ?? this.properties?.strokeWidth ?? 4
+        : this.properties?.strokeWidth ?? 4) * devicePixelRatio;
     if (this.properties?.maintainRelativeWidth) {
       const { a } = this.ctx.getTransform().inverse();
       lineWidth *= a;
     }
 
     this.ctx.lineWidth = lineWidth;
-    this.ctx.strokeStyle = this.isPointInStroke
-      ? 'red'
-      : this.properties?.strokeColor ?? 'blue';
+    this.ctx.strokeStyle =
+      this.isPointInStroke || this.isPointInPath
+        ? this.properties?.hoverStrokeColor ??
+          this.properties?.strokeColor ??
+          'blue'
+        : this.properties?.strokeColor ?? 'blue';
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);
-    this.ctx.restore();
   }
-  // TODO: Not working as expected, it has to be done with math
+
   public checkPointOn(point: Point): boolean {
     this.isPointInPath = this.ctx.isPointInPath(this.path, point.x, point.y);
     this.isPointInStroke = this.ctx.isPointInStroke(
@@ -51,7 +54,6 @@ export class CPLine extends CPCanvasObject {
       point.x,
       point.y
     );
-    // console.log('check: ', this.isPointInPath, this.isPointInStroke);
     return this.isPointInPath || this.isPointInStroke;
   }
 }
