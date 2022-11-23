@@ -4,7 +4,7 @@
     <nav></nav>
     <div class="canvas">
       <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="true" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 
         <div class="loader" loader>

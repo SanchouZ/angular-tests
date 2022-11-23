@@ -15,7 +15,7 @@ export class CPLine extends CPCanvasObject {
     this.path = new Path2D();
     this.ctx.beginPath();
 
-    this.points.forEach(({ x, y }, i, points) => {
+    this.points.forEach(({ x, y }, i) => {
       if (i === 0) {
         this.path.moveTo(x, y);
       } else {

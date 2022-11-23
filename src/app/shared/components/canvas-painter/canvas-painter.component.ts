@@ -331,12 +331,7 @@ export class CanvasPainterComponent
       this.canvasContainer.nativeElement.addEventListener(
         'mousemove',
         (evt: MouseEvent) => {
-          const coords = this.utils.getCanvasCoordinates(
-            evt.screenX,
-            evt.screenY
-          );
           if (this.checkCanvasObjectIntersect(this.#canvasCoords)) {
-            console.log('redraw');
             this.redraw();
             this.canvasContainer.nativeElement.style.cursor = 'pointer';
           } else {
@@ -347,10 +342,17 @@ export class CanvasPainterComponent
     });
 
     this.sub.add(
-      this.markers.changes.pipe(tap(() => this.createMarkerLinks())).subscribe()
+      this.markers.changes
+        .pipe(
+          tap(() => {
+            this.createMarkerLinks();
+            this.redraw();
+          })
+        )
+        .subscribe()
     );
     this.sub.add(
-      this.markers.changes
+      this.svgPaths.changes
         .pipe(tap(() => this.createSVGLayerFromTemplate()))
         .subscribe()
     );
@@ -419,8 +421,23 @@ export class CanvasPainterComponent
     return this.#zoom;
   }
 
-  public get transform(): DOMMatrix {
-    return this.ctx.getTransform();
+  public get transform(): {
+    scaleX: number;
+    skewY: number;
+    skewX: number;
+    scaleY: number;
+    tX: number;
+    tY: number;
+  } {
+    const { a, b, c, d, e, f } = this.ctx.getTransform();
+    return {
+      scaleX: a,
+      skewY: b,
+      skewX: c,
+      scaleY: d,
+      tX: e,
+      tY: f,
+    };
   }
 
   public toogleLoadingState(): void {
@@ -620,18 +637,11 @@ export class CanvasPainterComponent
 
         linkedMarkers.forEach((linkedMarker) => {
           lines.push(
-            new CPLine(
-              this.ctx,
-              [
-                { x: marker.x, y: marker.y },
-                { x: linkedMarker.x, y: linkedMarker.y },
-              ],
-              {
-                strokeWidth: 10,
-                hoverStrokeColor: 'green',
-                maintainRelativeWidth: this.maintainRelativeWidth,
-              }
-            )
+            new CPLine(this.ctx, [marker, linkedMarker], {
+              strokeWidth: 10,
+              hoverStrokeColor: 'green',
+              maintainRelativeWidth: this.maintainRelativeWidth,
+            })
           );
         });
       }
