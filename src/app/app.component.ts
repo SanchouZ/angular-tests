@@ -14,6 +14,8 @@ import { BehaviorSubject } from 'rxjs';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
 import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-path.directive';
 import {
+  CPCanvasLayer,
+  CPCanvasLayers,
   CPClickEvent,
   CPMarkerProperties,
   CPPathProperties,
@@ -21,6 +23,7 @@ import {
   CPSVGLayers,
   Point,
 } from './shared/components/canvas-painter/models/editor.model';
+import { CPImage } from './shared/components/canvas-painter/objects/canvas/image.model';
 import { CPSVGObject } from './shared/components/canvas-painter/objects/svg/object.model';
 import { CPPath } from './shared/components/canvas-painter/objects/svg/path.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
@@ -119,7 +122,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     strokeLinejoin: 'round',
     maintainRelativeWidth: false,
     clickCallback: this.pathClick,
-    data: 'data'
+    data: 'data',
   };
 
   public svgLayers: CPSVGLayers = {
@@ -205,6 +208,30 @@ export class AppComponent implements OnInit, AfterViewInit {
       };
       console.log(this.svgLayers);
     }, 5000);
+
+    setTimeout(() => {
+      const img = new Image();
+      img.src = '/assets/images/1.png';
+      img.onload = () => {
+        const ratio = img.width / img.height;
+
+        canvas.addCanvasLayer('images', {
+          id: 'test',
+          name: 'test',
+          opacity: 1,
+          objects: [
+            new CPImage(
+              canvas.utils.ctx,
+              img,
+              { x: 800, y: 800 },
+              null,
+              img.height * ratio * 0.6,
+              img.height * 0.6,
+            ),
+          ],
+        });
+      };
+    }, 7000);
   }
 
   onChangeZoom(zoom: number): void {
