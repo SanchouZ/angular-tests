@@ -2,12 +2,12 @@ import { EventEmitter } from '@angular/core';
 import { CPClickEvent, CPPathProperties } from '../../models/editor.model';
 
 export abstract class CPSVGObject {
-  public clickCalback: (event: CPClickEvent, data: CPPathProperties) => void;
+  public clickCallback: (event: CPClickEvent, data: any) => void;
 
   constructor(
     public geometry: number[][] | number[][][],
     public properties: CPPathProperties
   ) {
-    this.clickCalback = properties.clickCalback;
+    this.clickCallback = properties.clickCallback;
   }
 }

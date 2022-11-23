@@ -31,8 +31,10 @@ import {
   Point,
   CPSVGLayers,
   CPSVGLayer,
+  CPPathProperties,
 } from './models/editor.model';
-import { CPLine } from './objects/canvas/line.mode';
+import { CPLine } from './objects/canvas/line.model';
+import { CPCanvasObject } from './objects/canvas/object.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
@@ -80,6 +82,17 @@ export class CanvasPainterComponent
   @Input() showDebugPanel = false;
   @Input() maintainRelativeWidth = false;
   @Input() maxZoom = 20;
+  @Input() markerLinksLineProperties: CPPathProperties = {
+    strokeWidth: 10,
+    hoverStrokeColor: 'green',
+    strokeLineCap: 'round',
+    maintainRelativeWidth: this.maintainRelativeWidth,
+    clickCallback: (event, data) => {
+      console.log('CANVAS PATH');
+      console.log(event);
+      console.log(data);
+    },
+  };
 
   @Input() set layersCanvas(layers: CPCanvasLayers) {
     if (layers) {
@@ -331,7 +344,8 @@ export class CanvasPainterComponent
       this.canvasContainer.nativeElement.addEventListener(
         'mousemove',
         (evt: MouseEvent) => {
-          if (this.checkCanvasObjectIntersect(this.#canvasCoords)) {
+          const intercect = this.checkCanvasObjectIntersect(this.#canvasCoords);
+          if (intercect.redraw) {
             this.redraw();
             this.canvasContainer.nativeElement.style.cursor = 'pointer';
           } else {
@@ -339,6 +353,16 @@ export class CanvasPainterComponent
           }
         }
       );
+
+      this.canvas.nativeElement.addEventListener('click', (evt: MouseEvent) => {
+        const intercect = this.checkCanvasObjectIntersect(this.#canvasCoords);
+        console.log(intercect);
+        intercect.intercectedObjects.forEach((object) => {
+          if (object.clickCallback) {
+            object.clickCallback(this.getEventInfo(), object.properties?.data);
+          }
+        });
+      });
     });
 
     this.sub.add(
@@ -467,7 +491,7 @@ export class CanvasPainterComponent
         const svgHost = new CPSVGPath('', this.utils);
         svgHost.geometry = object.geometry;
         svgHost.properties = object.properties;
-        svgHost.clickCalback = object.properties.clickCalback;
+        svgHost.clickCallback = object.properties.clickCallback;
         return svgHost;
       }),
     };
@@ -578,10 +602,13 @@ export class CanvasPainterComponent
     });
   }
 
-  private checkCanvasObjectIntersect(point: Point): boolean {
+  private checkCanvasObjectIntersect(point: Point): {
+    redraw: boolean;
+    intercectedObjects: CPCanvasObject[];
+  } {
     this.ctx.save();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-
+    const intercectedObjects: CPCanvasObject[] = [];
     let redraw = false;
     Object.values(this.#layersCanvas).forEach((layer) => {
       layer.objects.forEach((object) => {
@@ -593,10 +620,14 @@ export class CanvasPainterComponent
         if (intersect && !redraw) {
           redraw = true;
         }
+
+        if (intersect) {
+          intercectedObjects.push(object);
+        }
       });
     });
     this.ctx.restore();
-    return redraw;
+    return { redraw, intercectedObjects };
   }
 
   private updateMarkers(): void {
@@ -638,9 +669,11 @@ export class CanvasPainterComponent
         linkedMarkers.forEach((linkedMarker) => {
           lines.push(
             new CPLine(this.ctx, [marker, linkedMarker], {
-              strokeWidth: 10,
-              hoverStrokeColor: 'green',
-              maintainRelativeWidth: this.maintainRelativeWidth,
+              ...this.markerLinksLineProperties,
+              data: {
+                point1: marker,
+                point2: linkedMarker,
+              },
             })
           );
         });

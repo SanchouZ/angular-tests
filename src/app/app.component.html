@@ -4,7 +4,7 @@
     <nav></nav>
     <div class="canvas">
       <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="true" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
         (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
 
         <div class="loader" loader>
@@ -31,7 +31,7 @@
 
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
           [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"
-          (positionUpdated)="handleMarkerPositionUdpdate($event, marker)">{{ marker.value }}
+          (positionUpdated)="handleMarkerPositionUpdate($event, marker)">{{ marker.value }}
         </div> -->
 
       </mf-canvas-painter>
@@ -76,7 +76,7 @@
 
 <app-video-player></app-video-player> -->
 
-<!-- 
+<!--
 
 
 <ng-template [ngTemplateOutlet]="loopTemp" [ngTemplateOutletContext]="{ $implicit: 'This is implicit' }"></ng-template>

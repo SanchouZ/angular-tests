@@ -118,7 +118,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     strokeLineCap: 'round',
     strokeLinejoin: 'round',
     maintainRelativeWidth: false,
-    clickCalback: this.pathClick,
+    clickCallback: this.pathClick,
     data: 'data'
   };
 
@@ -232,7 +232,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log(data);
   }
 
-  handleMarkerPositionUdpdate(position: Point, marker: Marker) {
+  handleMarkerPositionUpdate(position: Point, marker: Marker) {
     marker.x = position.x;
     marker.y = position.y;
   }

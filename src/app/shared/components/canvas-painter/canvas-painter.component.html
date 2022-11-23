@@ -23,7 +23,7 @@
                         [attr.stroke-linecap]="path.properties?.strokeLineCap ?? 'butt'"
                         [attr.stroke-linejoin]="path.properties?.strokeLinejoin ?? 'miter'"
                         [attr.fill]="path.hover ? path.properties?.hoverFill ?? path.properties?.fill ?? 'none' : path.properties?.fill ?? 'none'"
-                        (click)="path.clickCalback ? path.clickCalback(getEventInfo(), path.properties.data) : path.pathClick.emit(getEventInfo())"
+                        (click)="path.clickCallback ? path.clickCallback(getEventInfo(), path.properties.data) : path.pathClick.emit(getEventInfo())"
                         (mouseenter)="path.hover = true" (mouseleave)="path.hover = false">
                     </path>
                 </ng-container>
