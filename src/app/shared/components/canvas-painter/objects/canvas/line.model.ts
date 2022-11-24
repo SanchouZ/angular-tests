@@ -2,14 +2,15 @@ import { CPPathProperties, Point } from '../../models/editor.model';
 import { CPCanvasObject } from './object.model';
 
 export class CPLine extends CPCanvasObject {
+  public path: Path2D;
+
   constructor(
     ctx: CanvasRenderingContext2D,
     private points: Point[] | Point[][],
     properties: CPPathProperties,
     id?: number
   ) {
-    super(ctx, properties, id);
-    this.clickCallback = properties.clickCallback;
+    super(ctx, properties);
   }
 
   draw(): void {
@@ -53,13 +54,20 @@ export class CPLine extends CPCanvasObject {
 
     this.ctx.strokeStyle =
       this.isPointInStroke || this.isPointInPath
-        ? this.properties?.hoverStrokeColor ??
-          this.properties?.strokeColor ??
-          'blue'
-        : this.properties?.strokeColor ?? 'blue';
+        ? this.properties?.hoverStrokeColor ?? '#558ed5'
+        : this.properties?.strokeColor ?? '#2b405f';
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);
+  }
+
+  public rotate(angle: number): void {
+    this._rotationAngle = angle;
+  }
+
+  public scale(scaleX: number, scaleY: number): void {
+    this._scaleX = scaleX;
+    this._scaleY = scaleY;
   }
 
   public checkPointOn(point: Point): boolean {

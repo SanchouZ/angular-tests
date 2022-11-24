@@ -35,6 +35,7 @@ import {
 } from './models/editor.model';
 import { CPLine } from './objects/canvas/line.model';
 import { CPCanvasObject } from './objects/canvas/object.model';
+import { CPObject } from './objects/object.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 
 @Component({
@@ -158,6 +159,7 @@ export class CanvasPainterComponent
   @Output() private zoomChange = new EventEmitter<number>();
   @Output() private canvasReady = new EventEmitter<CanvasPainterComponent>();
   @Output() private loading = new EventEmitter<boolean>();
+  @Output() private selectObjects = new EventEmitter<CPObject[]>();
 
   @ContentChildren(CPMarker) markers: QueryList<CPMarker>;
   @ContentChildren(CPSVGPath) svgPaths: QueryList<CPSVGPath>;
@@ -362,6 +364,7 @@ export class CanvasPainterComponent
             object.clickCallback(this.getEventInfo(), object.properties?.data);
           }
         });
+        this.selectObjects.emit(intercect.intercectedObjects);
       });
     });
 
@@ -566,6 +569,7 @@ export class CanvasPainterComponent
         this.canvas.nativeElement.width,
         this.canvas.nativeElement.height
       );
+
       this.ctx.restore();
 
       this.updateMarkers();
@@ -597,6 +601,10 @@ export class CanvasPainterComponent
         this.zoomChange.emit(this.zoom);
       }
 
+      // This is reset line width to prevent issues
+      // with intercections
+      this.ctx.lineWidth = 8;
+
       this.updateSvgBounds();
       this.updateUtils();
     });
@@ -604,7 +612,7 @@ export class CanvasPainterComponent
 
   private checkCanvasObjectIntersect(point: Point): {
     redraw: boolean;
-    intercectedObjects: CPCanvasObject[];
+    intercectedObjects: CPObject[];
   } {
     this.ctx.save();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);

@@ -50,11 +50,6 @@ export class CPMarker implements OnInit {
   private capturedMarkerCoords: Point = { x: 0, y: 0 };
   private capturedCanvasCoords: Point = { x: 0, y: 0 };
 
-  @HostListener('click', ['$event'])
-  private handleClick(evt: MouseEvent) {
-    evt.stopPropagation();
-  }
-
   @HostListener('mousedown', ['$event'])
   private handleMouseDown(evt: MouseEvent) {
     evt.stopPropagation();
@@ -78,12 +73,12 @@ export class CPMarker implements OnInit {
   @HostListener('mouseleave', ['$event'])
   private handleMouseLeave(evt: MouseEvent) {
     evt.stopPropagation();
-    if (this.properties?.editable) {
-      this.moveActive = false;
-    }
+    // if (this.properties?.editable) {
+    //   this.moveActive = false;
+    // }
   }
 
-  @HostListener('mousemove', ['$event'])
+  @HostListener('window:mousemove', ['$event'])
   private handleMouseMove(evt: MouseEvent) {
     if (this.properties?.editable && this.moveActive) {
       const currentCanvasCoords = this.utils.canvasCoordinates;

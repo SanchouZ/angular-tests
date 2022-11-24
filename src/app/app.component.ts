@@ -1,4 +1,3 @@
-import { NONE_TYPE } from '@angular/compiler';
 import {
   AfterViewInit,
   Component,
@@ -9,13 +8,9 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
-import { MatSliderChange } from '@angular/material/slider';
 import { BehaviorSubject } from 'rxjs';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
-import { CPSVGPath } from './shared/components/canvas-painter/directives/svg-path.directive';
 import {
-  CPCanvasLayer,
-  CPCanvasLayers,
   CPClickEvent,
   CPMarkerProperties,
   CPPathProperties,
@@ -24,7 +19,7 @@ import {
   Point,
 } from './shared/components/canvas-painter/models/editor.model';
 import { CPImage } from './shared/components/canvas-painter/objects/canvas/image.model';
-import { CPSVGObject } from './shared/components/canvas-painter/objects/svg/object.model';
+import { CPObject } from './shared/components/canvas-painter/objects/object.model';
 import { CPPath } from './shared/components/canvas-painter/objects/svg/path.model';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
 
@@ -72,6 +67,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     offsetY: -20,
     editable: true,
   };
+
+  public markerOptionsImagePoint: CPMarkerProperties = {
+    offsetX: -10,
+    offsetY: -10,
+    editable: false,
+  };
+
   public markers: Marker[] = [
     {
       id: 0,
@@ -159,6 +161,14 @@ export class AppComponent implements OnInit, AfterViewInit {
     ],
   };
 
+  public imageInsertPoint: Marker = {
+    id: 222,
+    x: 800,
+    y: 600,
+    value: '1',
+    links: [],
+  };
+
   constructor(private renderer: Renderer2) {}
 
   ngOnInit(): void {
@@ -209,29 +219,24 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(this.svgLayers);
     }, 5000);
 
-    setTimeout(() => {
-      const img = new Image();
-      img.src = '/assets/images/1.png';
-      img.onload = () => {
-        const ratio = img.width / img.height;
+    setTimeout(() => {}, 3000);
 
-        canvas.addCanvasLayer('images', {
-          id: 'test',
-          name: 'test',
-          opacity: 1,
-          objects: [
-            new CPImage(
-              canvas.utils.ctx,
-              img,
-              { x: 800, y: 800 },
-              null,
-              img.height * ratio * 0.6,
-              img.height * 0.6,
-            ),
-          ],
-        });
-      };
-    }, 7000);
+    const img = new Image();
+    img.src = '/assets/images/2.jpg';
+    img.onload = () => {
+      const ratio = img.width / img.height;
+
+      canvas.addCanvasLayer('images', {
+        id: 'test',
+        name: 'test',
+        opacity: 1,
+        objects: [
+          new CPImage(canvas.utils.ctx, img, this.imageInsertPoint, {
+            editable: true,
+          }),
+        ],
+      });
+    };
   }
 
   onChangeZoom(zoom: number): void {
@@ -262,5 +267,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   handleMarkerPositionUpdate(position: Point, marker: Marker) {
     marker.x = position.x;
     marker.y = position.y;
+  }
+
+  handleSelectObjects(objects: CPObject[]) {
+    console.log(objects);
   }
 }

@@ -4,8 +4,9 @@
     <nav></nav>
     <div class="canvas">
       <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers" (canvasReady)="onCanvasReady($event)"
-        (zoomChange)="onChangeZoom($event)" (canvasClick)="handleCanvasClick($event)">
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers"
+        (canvasReady)="onCanvasReady($event)" (zoomChange)="onChangeZoom($event)"
+        (canvasClick)="handleCanvasClick($event)" (selectObjects)="handleSelectObjects($event)">
 
         <div class="loader" loader>
           <div class="loader__content">
@@ -32,7 +33,13 @@
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
           [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"
           (positionUpdated)="handleMarkerPositionUpdate($event, marker)">{{ marker.value }}
-        </div> -->
+        </div>
+
+        <div cpMarker [id]="imageInsertPoint.id" [x]="imageInsertPoint.x" [y]="imageInsertPoint.y"
+          [linkedMarkers]="imageInsertPoint.links" [properties]="markerOptions" class="marker"
+          (click)="handleMarkerClick()" (positionUpdated)="handleMarkerPositionUpdate($event, imageInsertPoint)">{{
+          imageInsertPoint.value }}
+        </div>
 
       </mf-canvas-painter>
 

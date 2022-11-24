@@ -12,6 +12,8 @@ export class CanvasPainterUtilsService {
   private _zoom: number;
   private _redraw: (forceZoomCheck?: boolean, emitZoom?: boolean) => void;
 
+  public blockCanvasTranslate = false;
+
   constructor() {}
 
   set ctx(ctx: CanvasRenderingContext2D) {
@@ -168,8 +170,12 @@ export class CanvasPainterUtilsService {
   public rotatePoints(
     points: Point[],
     angle: number,
-    origin: { x: number; y: number }
+    origin?: { x: number; y: number }
   ): Point[] {
+    if (!origin) {
+      origin = { x: 0, y: 0 };
+    }
+
     const radAngle = (angle / 180) * Math.PI;
     const rotateMatrix = [
       [Math.cos(radAngle), -Math.sin(radAngle)],
@@ -182,6 +188,48 @@ export class CanvasPainterUtilsService {
 
       const pX = rotateMatrix[0][0] * x + rotateMatrix[0][1] * y + origin.x;
       const pY = rotateMatrix[1][0] * x + rotateMatrix[1][1] * y + origin.y;
+
+      return { x: pX, y: pY };
+    });
+  }
+
+  public scalePoints(
+    points: Point[],
+    scaleX: number,
+    scaleY: number,
+    origin?: { x: number; y: number }
+  ): Point[] {
+    if (!origin) {
+      origin = { x: 0, y: 0 };
+    }
+
+    return points.map((point) => {
+      const x = point.x - origin.x;
+      const y = point.y - origin.y;
+
+      const pX = scaleX * x + 0 * y + origin.x;
+      const pY = 0 * x + scaleY * y + origin.y;
+
+      return { x: pX, y: pY };
+    });
+  }
+
+  public translatePoints(
+    points: Point[],
+    tX: number,
+    tY: number,
+    origin?: { x: number; y: number }
+  ): Point[] {
+    if (!origin) {
+      origin = { x: 0, y: 0 };
+    }
+    
+    return points.map((point) => {
+      const x = point.x - origin.x;
+      const y = point.y - origin.y;
+
+      const pX = 1 * x + 0 * y + origin.x + tX;
+      const pY = 0 * x + 1 * y + origin.y + tY;
 
       return { x: pX, y: pY };
     });

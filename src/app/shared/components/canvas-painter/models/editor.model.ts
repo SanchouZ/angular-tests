@@ -1,5 +1,5 @@
 import { CPCanvasObject } from '../objects/canvas/object.model';
-import { CPSVGObject } from '../objects/svg/object.model';
+import { CPSVGObject } from '../objects/svg/svg-object.model';
 import { CPLayer } from './editor-only.model';
 
 export interface Point {
@@ -55,7 +55,7 @@ export interface CPPathProperties {
   fill?: string;
   hoverFill?: string;
   maintainRelativeWidth?: boolean;
-  /** SVG Only for now */
+  editable?: boolean;
   clickCallback?: (event: CPClickEvent, data: any) => void;
   data?: any;
 }
