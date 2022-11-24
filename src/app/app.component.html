@@ -44,14 +44,38 @@
       </mf-canvas-painter>
 
       <div class="tools-right">
-        <mat-button-toggle-group [value]="currentImageIndex" aria-label="Plans" (change)="changeImage($event)">
-          <mat-button-toggle *ngFor="let image of images; let i = index" [value]="i ">{{ i + 1 }}</mat-button-toggle>
-        </mat-button-toggle-group>
-        <mat-slider min="0.01" max="20" step="0.01" [value]="zoom" (input)="onChangeZoom($event.value)" showTickMarks>
-          <input matSliderThumb>
-        </mat-slider>
-        <mat-slide-toggle [(ngModel)]="isMarkersAddMode">Markers add mode: {{isMarkersAddMode}}</mat-slide-toggle>
+        <div class="tools-right__tool">
+          <mat-button-toggle-group [value]="currentImageIndex" aria-label="Plans" (change)="changeImage($event)">
+            <mat-button-toggle *ngFor="let image of images; let i = index" [value]="i ">{{ i + 1 }}</mat-button-toggle>
+          </mat-button-toggle-group>
+          <mat-slider style="width: 100%;" min="0.01" max="20" step="0.01" [value]="zoom"
+            (input)="onChangeZoom($event.value)" showTickMarks>
+            <input matSliderThumb>
+          </mat-slider>
+          <mat-slide-toggle [(ngModel)]="isMarkersAddMode">Markers add mode: {{isMarkersAddMode}}</mat-slide-toggle>
+        </div>
+
+        <div *ngIf="selectedObjects.length > 0 && getObject() as object" @fadeInOut class="tools-right__tool tool">
+          <h4 class="tool__title">{{ object.id }} </h4>
+          <img class="tool__preview" *ngIf="getObjectPreview(object)" @fadeInOut [src]="getObjectPreview(object)">
+          <div class="tool__control">
+            <p>Rotation: {{ object.rotationAngle }}</p>
+            <mat-slider style="width: 100%;" min="-180" max="180" step="0.01" [value]="object.rotationAngle"
+              (input)="handleObjectRotation(object, $event.value)" showTickMarks>
+              <input matSliderThumb>
+            </mat-slider>
+          </div>
+          <div class="tool__control">
+            <p>Scale: {{ object.scaleX }}</p>
+            <mat-slider style="width: 100%;" min="0.5" max="2.5" step="0.01" [value]="object.scaleX"
+              (input)="handleObjectScale(object, $event.value)" showTickMarks>
+              <input matSliderThumb>
+            </mat-slider>
+          </div>
+        </div>
       </div>
+
+
     </div>
     <aside></aside>
   </main>

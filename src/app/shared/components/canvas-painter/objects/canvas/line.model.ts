@@ -11,6 +11,7 @@ export class CPLine extends CPCanvasObject {
     id?: number
   ) {
     super(ctx, properties);
+    this.calcBound(this.points.flat());
   }
 
   draw(): void {

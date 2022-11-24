@@ -604,6 +604,9 @@ export class CanvasPainterComponent
       // This is reset line width to prevent issues
       // with intercections
       this.ctx.lineWidth = 8;
+      this.ctx.lineCap = 'butt';
+      this.ctx.lineJoin = 'miter';
+      this.ctx.strokeStyle = '#2b405f';
 
       this.updateSvgBounds();
       this.updateUtils();

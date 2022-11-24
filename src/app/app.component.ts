@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
 import { BehaviorSubject } from 'rxjs';
+import { fadeInOutAnimation } from './shared/components/canvas-painter/animations/fade-in-out.animation';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
 import {
   CPClickEvent,
@@ -35,6 +36,7 @@ interface Marker {
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  animations: [fadeInOutAnimation],
 })
 export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild('canvas', { static: true }) canvas: ElementRef<HTMLCanvasElement>;
@@ -52,6 +54,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   public imageURL$ = new BehaviorSubject<string>(null);
 
   public zoom: number = 1;
+
+  private cpRef: CanvasPainterComponent;
+  public selectedObjects: CPObject[] = [];
 
   // public images: string[] = ['/assets/images/1.png', '/assets/images/2.jpg'];
   public images: string[] = [
@@ -208,6 +213,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public onCanvasReady(canvas: CanvasPainterComponent) {
     const layer = this.svgLayer;
     // canvas.addSVGLayer(this.svgLayer);
+    this.cpRef = canvas;
 
     setTimeout(() => {
       // console.log('remove layer');
@@ -270,6 +276,27 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   handleSelectObjects(objects: CPObject[]) {
-    console.log(objects);
+    this.selectedObjects = objects;
+  }
+
+  public getObject(): CPObject {
+    return this.selectedObjects[this.selectedObjects.length - 1];
+  }
+
+  getObjectPreview(obj: CPObject): string {
+    if (obj && obj.preview) {
+      return obj.preview.src;
+    }
+    return null;
+  }
+
+  handleObjectRotation(obj: CPObject, angle: number): void {
+    obj.rotate(angle);
+    this.cpRef.validateCanvas();
+  }
+
+  handleObjectScale(obj: CPObject, scale: number): void {
+    obj.scale(scale, scale);
+    this.cpRef.validateCanvas();
   }
 }

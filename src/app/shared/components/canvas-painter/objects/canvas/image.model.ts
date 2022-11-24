@@ -28,6 +28,8 @@ export class CPImage extends CPCanvasObject {
 
     this.width = width ?? this.image.width;
     this.height = height ?? this.image.height;
+
+    this._preview = this.image;
   }
 
   draw(): void {
@@ -137,5 +139,7 @@ export class CPImage extends CPCanvasObject {
       this._scaleY,
       this.insertPoint
     );
+
+    this.calcBound(this._outline);
   }
 }
