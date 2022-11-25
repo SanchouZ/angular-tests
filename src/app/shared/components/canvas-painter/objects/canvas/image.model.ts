@@ -22,10 +22,6 @@ export class CPImage extends CPCanvasObject {
     this._pivot = { x: this.image.width / 2, y: this.image.height / 2 };
     this._editable = properties?.editable;
 
-    this._rotationAngle = 30;
-    this._scaleX = 1.5;
-    this._scaleY = 1.5;
-
     this.width = width ?? this.image.width;
     this.height = height ?? this.image.height;
 
@@ -76,7 +72,40 @@ export class CPImage extends CPCanvasObject {
       point.x,
       point.y
     );
+
+    if (this.isPointInPath || this.isPointInStroke) {
+      this.getLocalCoords(point);
+    }
     return this.isPointInPath || this.isPointInStroke;
+  }
+
+  private getLocalCoords(point: Point): void {
+    const x = point.x - (this.insertPoint.x - this.pivot.x * this._scaleX);
+    const y = point.y - (this.insertPoint.y - this.pivot.y * this._scaleX);
+    console.log('input - x: ', x, ' : ', 'y: ', y);
+
+    const [rotated] = this.utils.rotatePoints(
+      [{ x, y }],
+      -this._rotationAngle,
+      {
+        x: this._pivot.x * this.scaleX,
+        y: this._pivot.y * this.scaleY,
+      }
+    );
+
+    console.log('rotated - x: ', rotated.x, ' : ', 'y: ', rotated.y);
+
+    const [final] = this.utils.scalePoints(
+      [rotated],
+      1 / this._scaleX,
+      1 / this._scaleY,
+      {
+        x: 0,
+        y: 0,
+      }
+    );
+
+    console.log('final - x: ', final.x, ' : ', 'y: ', final.y);
   }
 
   private drawOutline(): void {
