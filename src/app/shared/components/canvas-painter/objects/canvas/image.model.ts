@@ -141,5 +141,6 @@ export class CPImage extends CPCanvasObject {
     );
 
     this.calcBound(this._outline);
+    this.showBBox();
   }
 }

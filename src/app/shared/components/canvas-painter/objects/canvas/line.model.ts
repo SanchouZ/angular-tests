@@ -7,11 +7,9 @@ export class CPLine extends CPCanvasObject {
   constructor(
     ctx: CanvasRenderingContext2D,
     private points: Point[] | Point[][],
-    properties: CPPathProperties,
-    id?: number
+    properties: CPPathProperties
   ) {
     super(ctx, properties);
-    this.calcBound(this.points.flat());
   }
 
   draw(): void {
@@ -60,6 +58,7 @@ export class CPLine extends CPCanvasObject {
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);
+    this.calcBound(this.points.flat());
   }
 
   public rotate(angle: number): void {

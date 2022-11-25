@@ -77,27 +77,35 @@ export abstract class CPObject {
     let maxX = Number.MIN_VALUE;
     let maxY = Number.MIN_VALUE;
 
-    points.forEach((point) => {
-      if (point.x < minX) {
+    points.forEach((point, i) => {
+      if (i === 0) {
         minX = point.x;
-      }
-      if (point.x > maxX) {
         maxX = point.x;
-      }
-
-      if (point.y < minY) {
         minY = point.y;
-      }
-      if (point.y > maxY) {
         maxY = point.y;
+      } else {
+        if (point.x < minX) {
+          minX = point.x;
+        }
+        if (point.x > maxX) {
+          maxX = point.x;
+        }
+
+        if (point.y < minY) {
+          minY = point.y;
+        }
+
+        if (point.y > maxY) {
+          maxY = point.y;
+        }
       }
     });
 
     this._bound = {
       topLeft: { x: minX, y: minY },
       bottomRight: { x: maxX, y: maxY },
-      width: Math.abs(minX) + Math.abs(maxX),
-      height: Math.abs(minY) + Math.abs(maxY),
+      width: Math.abs(maxX - minX),
+      height: Math.abs(maxY - minY),
     };
   }
 }
