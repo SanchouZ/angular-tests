@@ -44,7 +44,7 @@ export interface CPMarkerProperties {
   editable?: boolean;
 }
 
-export interface CPPathProperties {
+export interface CPObjectProperties {
   closed?: boolean;
   strokeWidth?: number;
   strokeColor?: string;
@@ -54,6 +54,7 @@ export interface CPPathProperties {
   strokeLinejoin?: 'miter' | 'round' | 'bevel';
   fill?: string;
   hoverFill?: string;
+  opacity?: number;
   maintainRelativeWidth?: boolean;
   editable?: boolean;
   clickCallback?: (event: CPClickEvent, data: any) => void;

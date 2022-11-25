@@ -1,10 +1,10 @@
-import { CPPathProperties } from '../../models/editor.model';
+import { CPObjectProperties } from '../../models/editor.model';
 import { CPSVGObject } from './svg-object.model';
 
 export class CPPath extends CPSVGObject {
   constructor(
-    geometry: number[][] | number[][][],
-    properties: CPPathProperties
+    geometry: (number[] | number[][])[],
+    properties: CPObjectProperties
   ) {
     super(geometry, properties);
   }

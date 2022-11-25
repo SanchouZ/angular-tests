@@ -1,13 +1,14 @@
-import { CPPathProperties, Point } from '../../models/editor.model';
+import { EDITOR_COLORS, EDITOR_DIMS } from '../../config/editor.config';
+import { CPObjectProperties, Point } from '../../models/editor.model';
 import { CPCanvasObject } from './object.model';
 
-export class CPLine extends CPCanvasObject {
+export class CPCanvasPath extends CPCanvasObject {
   public path: Path2D;
 
   constructor(
     ctx: CanvasRenderingContext2D,
-    private points: Point[] | Point[][],
-    properties: CPPathProperties
+    private points: (Point | Point[])[],
+    properties: CPObjectProperties
   ) {
     super(ctx, properties);
   }
@@ -18,7 +19,7 @@ export class CPLine extends CPCanvasObject {
 
     this.points.forEach((point, i) => {
       if (Array.isArray(point)) {
-        point.forEach((point) => {
+        point.forEach((point, i) => {
           if (i === 0) {
             this.path.moveTo(point.x, point.y);
           } else {
@@ -39,12 +40,18 @@ export class CPLine extends CPCanvasObject {
     }
     let lineWidth =
       (this.isPointInStroke || this.isPointInPath
-        ? this.properties?.hoverStrokeWidth ?? this.properties?.strokeWidth ?? 4
-        : this.properties?.strokeWidth ?? 4) * devicePixelRatio;
+        ? this.properties?.hoverStrokeWidth ??
+          this.properties?.strokeWidth ??
+          EDITOR_DIMS.strokeWidth
+        : this.properties?.strokeWidth ?? EDITOR_DIMS.strokeWidth) *
+      devicePixelRatio;
+
     if (this.properties?.maintainRelativeWidth) {
       const { a } = this.ctx.getTransform().inverse();
       lineWidth *= a;
     }
+
+    this.ctx.globalAlpha = this.opacity ?? 1;
 
     this.ctx.lineWidth = lineWidth;
 
@@ -53,11 +60,13 @@ export class CPLine extends CPCanvasObject {
 
     this.ctx.strokeStyle =
       this.isPointInStroke || this.isPointInPath
-        ? this.properties?.hoverStrokeColor ?? '#558ed5'
-        : this.properties?.strokeColor ?? '#2b405f';
+        ? this.properties?.hoverStrokeColor ?? EDITOR_COLORS.strokeHover
+        : this.properties?.strokeColor ?? EDITOR_COLORS.stroke;
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);
+
+    this.ctx.globalAlpha = 1;
     this.calcBound(this.points.flat());
   }
 

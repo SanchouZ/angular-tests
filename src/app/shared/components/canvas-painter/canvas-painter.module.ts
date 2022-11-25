@@ -5,16 +5,13 @@ import { CanvasPainterComponent } from './canvas-painter.component';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
+import { CanvasPainterObjectsService } from './services/objects.service';
 
 @NgModule({
-  declarations: [
-    CanvasPainterComponent,
-    CPMarker,
-    CPSVGPath,
-  ],
+  declarations: [CanvasPainterComponent, CPMarker, CPSVGPath],
   imports: [CommonModule],
   exports: [CanvasPainterComponent, CPMarker, CPSVGPath],
-  providers: [CanvasPainterUtilsService],
+  providers: [CanvasPainterUtilsService, CanvasPainterObjectsService],
   schemas: [NO_ERRORS_SCHEMA],
 })
 export class CanvasPainterModule {}

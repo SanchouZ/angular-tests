@@ -1,7 +1,7 @@
 import {
   CPBound,
   CPClickEvent,
-  CPPathProperties,
+  CPObjectProperties,
   Point,
 } from '../models/editor.model';
 
@@ -21,10 +21,12 @@ export abstract class CPObject {
   protected _scaleY: number = 1;
   protected _editable: boolean = false;
   protected _bound: CPBound;
+  protected _opacity: number = 1;
 
-  constructor(public properties: CPPathProperties) {
+  constructor(public properties: CPObjectProperties) {
     this.clickCallback = properties?.clickCallback;
     this._id = 100 + CPObject.count++;
+    this._opacity = properties?.opacity ?? 1;
   }
 
   get id(): number {
@@ -57,6 +59,14 @@ export abstract class CPObject {
 
   get scaleY(): number {
     return this._scaleY;
+  }
+
+  get opacity(): number {
+    return this._opacity;
+  }
+
+  set opacity(opacity: number) {
+    this._opacity = opacity;
   }
 
   get preview(): HTMLImageElement {

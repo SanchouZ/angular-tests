@@ -4,7 +4,7 @@
     <nav></nav>
     <div class="canvas">
       <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
-        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="false" [layersSVG]="svgLayers"
+        [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="true" [layersSVG]="svgLayers"
         (canvasReady)="onCanvasReady($event)" (zoomChange)="onChangeZoom($event)"
         (canvasClick)="handleCanvasClick($event)" (selectObjects)="handleSelectObjects($event)">
 
@@ -49,7 +49,17 @@
 
         <div *ngIf="selectedObjects.length > 0 && getObject() as object" @fadeInOut class="tools-right__tool tool">
           <h4 class="tool__title">{{ object.id }} </h4>
-          <img class="tool__preview" *ngIf="getObjectPreview(object)" @fadeInOut [src]="getObjectPreview(object)">
+          <div class="tool__control" *ngIf="getObjectPreview(object)">
+            <img class="tool__preview" @fadeInOut [src]="getObjectPreview(object)">
+            <h5 class="tool__image-dims">{{ getImageDims(object) | json }}</h5>
+          </div>
+          <div class="tool__control">
+            <p>Opacity: {{ object.opacity }}</p>
+            <mat-slider style="width: 100%;" min="0" max="1" step="0.01" [value]="object.opacity"
+              (input)="handleObjectOpacity(object, $event.value)" showTickMarks>
+              <input matSliderThumb>
+            </mat-slider>
+          </div>
           <div class="tool__control">
             <p>Rotation: {{ object.rotationAngle }}</p>
             <mat-slider style="width: 100%;" min="-180" max="180" step="0.01" [value]="object.rotationAngle"

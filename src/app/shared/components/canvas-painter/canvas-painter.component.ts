@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   ContentChildren,
   ElementRef,
@@ -20,6 +21,7 @@ import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import { fadeInOutAnimation } from './animations/fade-in-out.animation';
+import { EDITOR_COLORS, EDITOR_DIMS } from './config/editor.config';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
 import { SceneSVGLayers } from './models/editor-only.model';
@@ -31,12 +33,13 @@ import {
   Point,
   CPSVGLayers,
   CPSVGLayer,
-  CPPathProperties,
+  CPObjectProperties,
 } from './models/editor.model';
-import { CPLine } from './objects/canvas/line.model';
+import { CPCanvasPath } from './objects/canvas/path.model';
 import { CPCanvasObject } from './objects/canvas/object.model';
 import { CPObject } from './objects/object.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
+import { CanvasPainterObjectsService } from './services/objects.service';
 
 @Component({
   selector: 'mf-canvas-painter',
@@ -83,11 +86,11 @@ export class CanvasPainterComponent
   @Input() showDebugPanel = false;
   @Input() maintainRelativeWidth = false;
   @Input() maxZoom = 20;
-  @Input() markerLinksLineProperties: CPPathProperties = {
+  @Input() markerLinksLineProperties: CPObjectProperties = {
     strokeWidth: 10,
     hoverStrokeColor: 'green',
     strokeLineCap: 'round',
-    maintainRelativeWidth: this.maintainRelativeWidth,
+    maintainRelativeWidth: false,
     clickCallback: (event, data) => {
       console.log('CANVAS PATH');
       console.log(event);
@@ -302,6 +305,7 @@ export class CanvasPainterComponent
 
   constructor(
     public utils: CanvasPainterUtilsService,
+    public objectsService: CanvasPainterObjectsService,
     private renderer: Renderer2,
     private cd: ChangeDetectorRef,
     private zone: NgZone
@@ -312,6 +316,8 @@ export class CanvasPainterComponent
 
     if (this.ctx) {
       this.utils.ctx = this.ctx;
+      this.objectsService.ctx = this.ctx;
+      this.objectsService.maintainWidth = this.maintainRelativeWidth;
     }
 
     if (this.canvasContainer) {
@@ -601,16 +607,19 @@ export class CanvasPainterComponent
         this.zoomChange.emit(this.zoom);
       }
 
-      // This is reset line width to prevent issues
-      // with intercections
-      this.ctx.lineWidth = 8;
-      this.ctx.lineCap = 'butt';
-      this.ctx.lineJoin = 'miter';
-      this.ctx.strokeStyle = '#2b405f';
+      this.resetContext();
 
       this.updateSvgBounds();
       this.updateUtils();
     });
+  }
+
+  private resetContext(): void {
+    this.ctx.lineWidth = EDITOR_DIMS.strokeWidth * (1 / this.zoom);
+    this.ctx.lineCap = 'butt';
+    this.ctx.lineJoin = 'miter';
+    this.ctx.strokeStyle = EDITOR_COLORS.stroke;
+    this.ctx.globalAlpha = 1;
   }
 
   private checkCanvasObjectIntersect(point: Point): {
@@ -660,7 +669,7 @@ export class CanvasPainterComponent
 
     const layer = this.#layersCanvas[this.markersLayerId];
 
-    const lines: CPLine[] = [];
+    const lines: CPCanvasPath[] = [];
     this.markers?.forEach((marker) => {
       if (marker.linkedMarkers && marker.linkedMarkers.length > 0) {
         alreadyProcced.add(marker.id);
@@ -679,8 +688,9 @@ export class CanvasPainterComponent
 
         linkedMarkers.forEach((linkedMarker) => {
           lines.push(
-            new CPLine(this.ctx, [marker, linkedMarker], {
+            new CPCanvasPath(this.ctx, [marker, linkedMarker], {
               ...this.markerLinksLineProperties,
+              maintainRelativeWidth: this.maintainRelativeWidth,
               data: {
                 point1: marker,
                 point2: linkedMarker,

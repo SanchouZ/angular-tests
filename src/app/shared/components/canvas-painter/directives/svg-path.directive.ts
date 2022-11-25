@@ -7,15 +7,15 @@ import {
   Output,
 } from '@angular/core';
 
-import { CPClickEvent, CPPathProperties } from '../models/editor.model';
+import { CPClickEvent, CPObjectProperties } from '../models/editor.model';
 import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 
 @Directive({
   selector: 'cp-svg-path',
 })
 export class CPSVGPath {
-  @Input() geometry: number[][] | number[][][];
-  @Input() properties: CPPathProperties;
+  @Input() geometry: (number[] | number[][])[];
+  @Input() properties: CPObjectProperties;
 
   public hover = false;
   public clickCallback: (event: CPClickEvent, data: any) => void;

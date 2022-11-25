@@ -1,5 +1,5 @@
 import { ElementRef, Injectable } from '@angular/core';
-import { CPPathProperties, Point, CPBound } from '../models/editor.model';
+import { CPObjectProperties, Point, CPBound } from '../models/editor.model';
 
 @Injectable()
 export class CanvasPainterUtilsService {
@@ -135,8 +135,8 @@ export class CanvasPainterUtilsService {
   }
 
   public createSVGPath(
-    points: number[][] | number[][][],
-    properties: CPPathProperties
+    points: (number[]| number[][])[],
+    properties: CPObjectProperties
   ): string {
     let path = '';
 
@@ -144,11 +144,11 @@ export class CanvasPainterUtilsService {
       if (Array.isArray(point[0])) {
         point.forEach((point, index) => {
           const point1 = point as number[];
-          const point2 = point as number[];
+    
           if (index === 0) {
             path += `M${point1[0]},${point1[1]} `;
           } else {
-            path += `L${point2[0]},${point2[1]} `;
+            path += `L${point1[0]},${point1[1]} `;
           }
         });
       } else {
@@ -223,7 +223,7 @@ export class CanvasPainterUtilsService {
     if (!origin) {
       origin = { x: 0, y: 0 };
     }
-    
+
     return points.map((point) => {
       const x = point.x - origin.x;
       const y = point.y - origin.y;

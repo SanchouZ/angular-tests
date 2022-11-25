@@ -8,13 +8,13 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, from, take, tap } from 'rxjs';
 import { fadeInOutAnimation } from './shared/components/canvas-painter/animations/fade-in-out.animation';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
 import {
   CPClickEvent,
   CPMarkerProperties,
-  CPPathProperties,
+  CPObjectProperties,
   CPSVGLayer,
   CPSVGLayers,
   Point,
@@ -22,6 +22,7 @@ import {
 import { CPImage } from './shared/components/canvas-painter/objects/canvas/image.model';
 import { CPObject } from './shared/components/canvas-painter/objects/object.model';
 import { CPPath } from './shared/components/canvas-painter/objects/svg/path.model';
+import { CanvasPainterObjectsService } from './shared/components/canvas-painter/services/objects.service';
 import { VideocardsNamesComponent } from './shared/videocard-names/videocard-names.component';
 
 interface Marker {
@@ -39,10 +40,8 @@ interface Marker {
   animations: [fadeInOutAnimation],
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  @ViewChild('canvas', { static: true }) canvas: ElementRef<HTMLCanvasElement>;
-
-  title = 'car-watcher';
-
+  // @ViewChild('canvas', { static: true }) canvas: ElementRef<HTMLCanvasElement>;
+  title = 'test-watcher';
   public component: Type<VideocardsNamesComponent> = VideocardsNamesComponent;
 
   public loading = false;
@@ -58,7 +57,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   private cpRef: CanvasPainterComponent;
   public selectedObjects: CPObject[] = [];
 
-  // public images: string[] = ['/assets/images/1.png', '/assets/images/2.jpg'];
   public images: string[] = [
     'https://picsum.photos/seed/fullhd2/1920/1080',
     'https://picsum.photos/seed/rect2/1000/800',
@@ -110,7 +108,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     },
   ];
 
-  public pathOptions: CPPathProperties = {
+  public pathOptions: CPObjectProperties = {
     strokeColor: '#ff131266',
     hoverStrokeColor: 'green',
     strokeWidth: 6,
@@ -120,7 +118,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     maintainRelativeWidth: false,
   };
 
-  public pathOptionsTest: CPPathProperties = {
+  public pathOptionsTest: CPObjectProperties = {
     strokeColor: '#2f61a066',
     hoverStrokeColor: 'green',
     strokeWidth: 6,
@@ -138,7 +136,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       name: 'test',
       opacity: 1,
       objects: [
-        new CPPath(
+        this.cpObjectsService.createSVGPath(
           [
             [400, 400],
             [620, 420],
@@ -155,7 +153,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     name: 'test1',
     opacity: 1,
     objects: [
-      new CPPath(
+      this.cpObjectsService.createSVGPath(
         [
           [400, 700],
           [620, 720],
@@ -174,7 +172,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     links: [],
   };
 
-  constructor(private renderer: Renderer2) {}
+  constructor(
+    private renderer: Renderer2,
+    private cpObjectsService: CanvasPainterObjectsService
+  ) {}
 
   ngOnInit(): void {
     console.log(
@@ -210,7 +211,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.imageURL$.next(this.images[evt.value]);
   }
 
-  public onCanvasReady(canvas: CanvasPainterComponent) {
+  public async onCanvasReady(canvas: CanvasPainterComponent) {
     const layer = this.svgLayer;
     // canvas.addSVGLayer(this.svgLayer);
     this.cpRef = canvas;
@@ -225,24 +226,53 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(this.svgLayers);
     }, 5000);
 
-    setTimeout(() => {}, 3000);
+    setTimeout(async () => {}, 3000);
 
-    const img = new Image();
-    img.src = '/assets/images/2.jpg';
-    img.onload = () => {
-      const ratio = img.width / img.height;
+    from(
+      this.cpObjectsService.createImage(
+        '/assets/images/2.jpg',
+        this.imageInsertPoint,
+        {
+          editable: true,
+        }
+      )
+    )
+      .pipe(
+        take(1),
+        tap((image) => {
+          if (image) {
+            canvas.addCanvasLayer('images', {
+              id: 'test',
+              name: 'test',
+              opacity: 1,
+              objects: [image],
+            });
+          }
+        })
+      )
+      .subscribe();
 
-      canvas.addCanvasLayer('images', {
-        id: 'test',
-        name: 'test',
-        opacity: 1,
-        objects: [
-          new CPImage(canvas.utils.ctx, img, this.imageInsertPoint, {
-            editable: true,
-          }),
-        ],
-      });
-    };
+    canvas.addCanvasLayer('lines', {
+      id: 'lines',
+      name: 'lines',
+      opacity: 1,
+      objects: [
+        this.cpObjectsService.createCanvasPath([
+          [
+            [100, 900],
+            [100, 1200],
+          ],
+          [
+            [200, 900],
+            [200, 1200],
+          ],
+        ]),
+        this.cpObjectsService.createCanvasPath([
+          [300, 400],
+          [750, 900],
+        ]),
+      ],
+    });
   }
 
   onChangeZoom(zoom: number): void {
@@ -290,6 +320,17 @@ export class AppComponent implements OnInit, AfterViewInit {
     return null;
   }
 
+  getImageDims(obj: CPObject): { width: number; height: number } {
+    if (obj instanceof CPImage) {
+      return {
+        width: obj.width,
+        height: obj.height,
+      };
+    } else {
+      return null;
+    }
+  }
+
   handleObjectRotation(obj: CPObject, angle: number): void {
     obj.rotate(angle);
     this.cpRef.validateCanvas();
@@ -297,6 +338,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   handleObjectScale(obj: CPObject, scale: number): void {
     obj.scale(scale, scale);
+    this.cpRef.validateCanvas();
+  }
+
+  handleObjectOpacity(obj: CPObject, opacity: number): void {
+    obj.opacity = opacity;
     this.cpRef.validateCanvas();
   }
 }
