@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  HostListener,
   OnInit,
   Renderer2,
   Type,
@@ -56,6 +57,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   private cpRef: CanvasPainterComponent;
   public selectedObjects: CPObject[] = [];
+
+  public testImage: CPImage;
 
   public images: string[] = [
     'https://picsum.photos/seed/fullhd2/1920/1080',
@@ -172,6 +175,19 @@ export class AppComponent implements OnInit, AfterViewInit {
     links: [],
   };
 
+  @HostListener('window:keypress', ['$event'])
+  private handleKeyboard(evt: KeyboardEvent) {
+    if (evt.code === 'KeyF' && this.testImage && this.cpRef) {
+      console.log('FOCUS BOUND');
+      this.cpRef.fitBounds(this.testImage.bound);
+    }
+
+    if (evt.code === 'KeyW' && this.cpRef) {
+      console.log('FOCUS POINT');
+      this.cpRef.focusToPoint({ x: 0, y: 0 }, [200, 300]);
+    }
+  }
+
   constructor(
     private renderer: Renderer2,
     private cpObjectsService: CanvasPainterObjectsService
@@ -247,11 +263,13 @@ export class AppComponent implements OnInit, AfterViewInit {
               opacity: 1,
               objects: [image],
             });
+
+            this.testImage = image;
           }
         }),
         delay(5000),
         tap((image) => {
-          this.cpRef.fitBounds(image.bound);
+          // this.cpRef.fitBounds(image.bound);
           // this.cpRef.focusToPoint({ x: 0, y: 0 }, [200, 300]);
         })
       )
