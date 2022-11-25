@@ -44,7 +44,7 @@ $background-color: #424242;
 
 header {
   width: 100%;
-  height: 100px;
+  height: 50px;
   background: #9dadc3;
 }
 
@@ -55,22 +55,22 @@ main {
 }
 
 nav {
-  width: 300px;
-  min-width: 300px;
+  width: 150px;
+  min-width: 150px;
   background: #9dadc3;
   height: 100%;
 }
 
 aside {
-  width: 300px;
-  min-width: 300px;
+  width: 150px;
+  min-width: 150px;
   background: #9dadc3;
   height: 100%;
 }
 
 footer {
   width: 100%;
-  height: 100px;
+  height: 50px;
   background: #9dadc3;
 }
 
@@ -121,7 +121,7 @@ footer {
     margin: 0;
     padding: 0;
     font-size: 14px;
-      line-height: 16px;
+    line-height: 16px;
   }
 
   &__preview {

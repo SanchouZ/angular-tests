@@ -8,7 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
-import { BehaviorSubject, from, take, tap } from 'rxjs';
+import { BehaviorSubject, delay, from, take, tap } from 'rxjs';
 import { fadeInOutAnimation } from './shared/components/canvas-painter/animations/fade-in-out.animation';
 import { CanvasPainterComponent } from './shared/components/canvas-painter/canvas-painter.component';
 import {
@@ -248,6 +248,11 @@ export class AppComponent implements OnInit, AfterViewInit {
               objects: [image],
             });
           }
+        }),
+        delay(5000),
+        tap((image) => {
+          this.cpRef.fitBounds(image.bound);
+          // this.cpRef.focusToPoint({ x: 0, y: 0 }, [200, 300]);
         })
       )
       .subscribe();

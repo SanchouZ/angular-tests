@@ -727,6 +727,69 @@ export class CanvasPainterComponent
     this.ctx.restore();
   }
 
+  public focusToPoint(point: Point, padding?: [number, number]) {
+    const frame = this.#canvasFrame;
+    const hOffset = padding ? padding[1] : frame.width / 2;
+    const vOffset = padding ? padding[0] : frame.height / 2;
+    const bound: CPBound = {
+      topLeft: { x: point.x - hOffset, y: point.y - vOffset },
+      bottomRight: {
+        x: point.x + hOffset,
+        y: point.y + vOffset,
+      },
+      width: hOffset * 2,
+      height: vOffset * 2,
+    };
+
+    this.fitBounds(bound);
+  }
+
+  public fitBounds(bound: CPBound, padding?: [number, number]) {
+    let transform = this.ctx.getTransform();
+    const transformInv = this.ctx.getTransform().inverse();
+
+    const zoomX = this.#canvasFrame.width / bound.width;
+    const zoomY = this.#canvasFrame.height / bound.height;
+    const minZoom = Math.min(zoomX, zoomY) / transformInv.a;
+
+    let xDiff = bound.width - this.#canvasFrame.width;
+    let yDiff = bound.height - this.#canvasFrame.height;
+
+    transform.a = minZoom;
+    transform.d = minZoom;
+
+    this.ctx.setTransform(transform);
+
+    transform = this.ctx.getTransform();
+    this.#zoom = transform.a;
+    this.#canvasFrame = this.getCanvasFrame();
+
+    xDiff = bound.width - this.#canvasFrame.width;
+    yDiff = bound.height - this.#canvasFrame.height;
+
+    const xTranslate =
+      Math.abs(xDiff) > Math.abs(bound.topLeft.x)
+        ? bound.topLeft.x * -1 * this.#zoom +
+          Math.abs(xDiff / 2) / (1 / transform.a)
+        : Math.abs(xDiff) - bound.topLeft.x * this.#zoom;
+
+    const yTranslate =
+      Math.abs(yDiff) > Math.abs(bound.topLeft.y)
+        ? bound.topLeft.y * -1 * this.#zoom +
+          Math.abs(yDiff / 2) / (1 / transform.a)
+        : Math.abs(yDiff / 2) / (1 / transform.a) -
+          bound.topLeft.y * this.#zoom;
+
+    transform.e = xTranslate;
+    transform.f = yTranslate;
+
+    this.ctx.setTransform(transform);
+    this.#zoom = transform.a;
+    this.#canvasFrame = this.getCanvasFrame();
+
+    this.redraw();
+  }
+
   private holdToBound(bound: CPBound, forceZoomCheck?: boolean): void {
     if (!bound) {
       return;
