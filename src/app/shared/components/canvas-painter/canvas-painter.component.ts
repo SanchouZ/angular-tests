@@ -749,15 +749,8 @@ export class CanvasPainterComponent
 
   public fitBounds(bound: CPBound, padding?: [number, number]) {
     let transform = this.ctx.getTransform();
-    const transformInv = this.ctx.getTransform().inverse();
-
-    const zoomX = this.#canvasFrame.width / bound.width;
-    const zoomY = this.#canvasFrame.height / bound.height;
-    const targetZoom = Math.min(zoomX, zoomY) / transformInv.a;
 
     const { targetScale, targetTX, targetTY } = this.getTargetTransform(bound);
-
-    console.log(this.getTargetTransform(bound));
 
     if (!this.disableAnimations) {
       let startTime: number = null;
@@ -776,42 +769,13 @@ export class CanvasPainterComponent
 
       const animate = (time: number) => {
         if (!startTime) startTime = time;
-        console.log(captureTX, captureTY);
+
         const timeFraction = parseFloat(
           duration < 250
             ? ((time - startTime) / duration).toFixed(1)
             : ((time - startTime) / duration).toFixed(2)
         );
         const inverseFraction = Math.abs(1 - timeFraction);
-
-        // transform.a = capturedZoom + zoomOffset * timeFraction;
-        // transform.d = capturedZoom + zoomOffset * timeFraction;
-
-        // this.ctx.setTransform(transform);
-
-        // transform = this.ctx.getTransform();
-        // this.#zoom = transform.a;
-        // this.#canvasFrame = this.getCanvasFrame();
-
-        // let xDiff = bound.width - this.#canvasFrame.width;
-        // let yDiff = bound.height - this.#canvasFrame.height;
-
-        // const xTranslate =
-        //   captureTX * inverseFraction +
-        //   (Math.abs(xDiff) > Math.abs(bound.topLeft.x)
-        //     ? bound.topLeft.x * -1 * this.#zoom +
-        //       Math.abs(xDiff / 2) / (1 / transform.a)
-        //     : Math.abs(xDiff) - bound.topLeft.x * this.#zoom);
-
-        // const yTranslate =
-        //   captureTY * inverseFraction +
-        //   (Math.abs(yDiff) > Math.abs(bound.topLeft.y)
-        //     ? bound.topLeft.y * -1 * this.#zoom +
-        //       Math.abs(yDiff / 2) / (1 / transform.a)
-        //     : Math.abs(yDiff / 2) / (1 / transform.a) -
-        //       bound.topLeft.y * this.#zoom);
-        // transform.e = xTranslate;
-        // transform.f = yTranslate;
 
         transform.a = capturedZoom + zoomOffset * timeFraction;
         transform.d = capturedZoom + zoomOffset * timeFraction;
@@ -838,32 +802,6 @@ export class CanvasPainterComponent
 
       this.currentAnimation = requestAnimationFrame(animate);
     } else {
-      // transform.a = targetZoom;
-      // transform.d = targetZoom;
-      // this.ctx.setTransform(transform);
-      // transform = this.ctx.getTransform();
-      // this.#zoom = transform.a;
-      // this.#canvasFrame = this.getCanvasFrame();
-      // let xDiff = bound.width - this.#canvasFrame.width;
-      // let yDiff = bound.height - this.#canvasFrame.height;
-      // const xTranslate =
-      //   Math.abs(xDiff) > Math.abs(bound.topLeft.x)
-      //     ? bound.topLeft.x * -1 * this.#zoom +
-      //       Math.abs(xDiff / 2) / (1 / transform.a)
-      //     : Math.abs(xDiff) - bound.topLeft.x * this.#zoom;
-      // const yTranslate =
-      //   Math.abs(yDiff) > Math.abs(bound.topLeft.y)
-      //     ? bound.topLeft.y * -1 * this.#zoom +
-      //       Math.abs(yDiff / 2) / (1 / transform.a)
-      //     : Math.abs(yDiff / 2) / (1 / transform.a) -
-      //       bound.topLeft.y * this.#zoom;
-      // transform.e = xTranslate;
-      // transform.f = yTranslate;
-      // this.ctx.setTransform(transform);
-      // this.#zoom = transform.a;
-      // this.#canvasFrame = this.getCanvasFrame();
-      // this.redraw();
-
       transform.a = targetScale;
       transform.d = targetScale;
 
@@ -896,32 +834,39 @@ export class CanvasPainterComponent
     const zoomY = this.#canvasFrame.height / bound.height;
     const targetZoom = Math.min(zoomX, zoomY) / transformInv.a;
 
-    // this.ctx.save();
-
     transform.a = targetZoom;
     transform.d = targetZoom;
+
     this.ctx.setTransform(transform);
+
     transform = this.ctx.getTransform();
+
     this.#zoom = transform.a;
     this.#canvasFrame = this.getCanvasFrame();
+
     let xDiff = bound.width - this.#canvasFrame.width;
     let yDiff = bound.height - this.#canvasFrame.height;
+
     const xTranslate =
       Math.abs(xDiff) > Math.abs(bound.topLeft.x)
         ? bound.topLeft.x * -1 * this.#zoom +
           Math.abs(xDiff / 2) / (1 / transform.a)
         : Math.abs(xDiff) - bound.topLeft.x * this.#zoom;
+
     const yTranslate =
       Math.abs(yDiff) > Math.abs(bound.topLeft.y)
         ? bound.topLeft.y * -1 * this.#zoom +
           Math.abs(yDiff / 2) / (1 / transform.a)
         : Math.abs(yDiff / 2) / (1 / transform.a) -
           bound.topLeft.y * this.#zoom;
+
     transform.e = xTranslate;
     transform.f = yTranslate;
+
     this.ctx.setTransform(transform);
+
     const { a, e, f } = this.ctx.getTransform();
-    // this.ctx.restore();
+
     return {
       targetScale: a,
       targetTX: e,
