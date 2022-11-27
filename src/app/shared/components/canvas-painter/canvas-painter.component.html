@@ -33,6 +33,11 @@
     <div class="canvas-painter__overlay_markers">
         <ng-content select="[cpMarker]"></ng-content>
     </div>
+    <div class="canvas-painter__edit_markers">
+        <ng-container *ngFor="let object of selection">
+            <div *ngIf="object.editable" class="canvas-painte__edit-marker edit-marker">{{ object.id }}</div>
+        </ng-container>
+    </div>
     <div *ngIf="isLoading" @fadeInOut class="canvas-painter__overlay_loader">
         <ng-content select="[loader]"></ng-content>
     </div>

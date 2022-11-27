@@ -31,7 +31,7 @@ export class CPMarker implements OnInit {
   /**
    * IDs of linked markers
    */
-  @Input() linkedMarkers: number[];
+  @Input() linkedMarkers: number[] = [];
   @Input() properties: CPMarkerProperties;
 
   @Output() positionUpdated = new EventEmitter<Point>();

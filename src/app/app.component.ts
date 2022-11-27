@@ -179,12 +179,12 @@ export class AppComponent implements OnInit, AfterViewInit {
   private handleKeyboard(evt: KeyboardEvent) {
     if (evt.code === 'KeyF' && this.testImage && this.cpRef) {
       console.log('FOCUS BOUND');
-      this.cpRef.fitBounds(this.testImage.bound);
+      this.cpRef.fitBounds(this.testImage.bound, [30, 30]);
     }
 
     if (evt.code === 'KeyW' && this.cpRef) {
       console.log('FOCUS POINT');
-      this.cpRef.focusToPoint({ x: 0, y: 0 }, [200, 300]);
+      this.cpRef.focusToPoint({ x: 0, y: 0 });
     }
   }
 

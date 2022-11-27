@@ -40,6 +40,7 @@ import { CPCanvasObject } from './objects/canvas/object.model';
 import { CPObject } from './objects/object.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 import { CanvasPainterObjectsService } from './services/objects.service';
+import { CPImage } from './objects/canvas/image.model';
 
 @Component({
   selector: 'mf-canvas-painter',
@@ -182,6 +183,8 @@ export class CanvasPainterComponent
 
   private moveStart: Point = { x: 0, y: 0 };
   private moveActive = false;
+
+  private _selection: CPObject[] = [];
 
   #layersCanvas: CPCanvasLayers = {};
   #layersSVG: SceneSVGLayers = {};
@@ -372,6 +375,11 @@ export class CanvasPainterComponent
           }
         });
         this.selectObjects.emit(intercect.intercectedObjects);
+        this._selection = intercect.intercectedObjects;
+
+        if (intercect.intercectedObjects[0] instanceof CPImage) {
+          intercect.intercectedObjects[0].getCanvasCoords({ x: 1161, y: 717 });
+        }
       });
     });
 
@@ -481,6 +489,14 @@ export class CanvasPainterComponent
 
   get svgElements(): SceneSVGLayers {
     return this.#layersSVG;
+  }
+
+  get canvasElements(): CPCanvasLayers {
+    return this.#layersCanvas;
+  }
+
+  get selection(): CPObject[] {
+    return this._selection;
   }
 
   private createSVGLayerFromTemplate(): void {
@@ -747,7 +763,27 @@ export class CanvasPainterComponent
 
   public currentAnimation: number;
 
-  public fitBounds(bound: CPBound, padding?: [number, number]) {
+  public fitBounds(targetBound: CPBound, padding?: [number, number]) {
+    let bound = targetBound;
+    if (padding) {
+      bound = {
+        topLeft: {
+          x: targetBound.topLeft.x - padding[1],
+          y: targetBound.topLeft.y - padding[0],
+        },
+        bottomRight: {
+          x: targetBound.bottomRight.x + padding[1],
+          y: targetBound.bottomRight.y + padding[0],
+        },
+        width: Math.abs(
+          targetBound.bottomRight.x - targetBound.topLeft.x + padding[1] * 2
+        ),
+        height: Math.abs(
+          targetBound.bottomRight.y - targetBound.topLeft.y + padding[0] * 2
+        ),
+      };
+    }
+
     let transform = this.ctx.getTransform();
 
     const capturedZoom = this.#zoom;

@@ -103,9 +103,40 @@ export class CPImage extends CPCanvasObject {
     }
   }
 
+  /**
+   * Return canvas space coordinates
+   * @param { Point } point - Object local coordinates
+   * @returns
+   */
+  public getCanvasCoords(point: Point): Point {
+    const [rotated] = this.utils.rotatePoints(
+      [{ x: point.x, y: point.y }],
+      this._rotationAngle,
+      {
+        x: this._pivot.x,
+        y: this._pivot.y,
+      }
+    );
+
+    const [imageOriginal] = this.utils.scalePoints(
+      [rotated],
+      this._scaleX,
+      this._scaleY,
+      {
+        x: 0,
+        y: 0,
+      }
+    );
+
+    return {
+      x: imageOriginal.x + this.insertPoint.x - this._pivot.x * this._scaleX,
+      y: imageOriginal.y + this.insertPoint.y - this._pivot.y * this._scaleY,
+    };
+  }
+
   private createLocalCoords(point: Point): { current: Point; original: Point } {
     const x = point.x - (this.insertPoint.x - this.pivot.x * this._scaleX);
-    const y = point.y - (this.insertPoint.y - this.pivot.y * this._scaleX);
+    const y = point.y - (this.insertPoint.y - this.pivot.y * this._scaleY);
     // console.log('input - x: ', x, ' : ', 'y: ', y);
 
     const [rotated] = this.utils.rotatePoints(
