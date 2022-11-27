@@ -12,8 +12,6 @@ export abstract class CPCanvasObject extends CPObject {
 
   abstract draw(): void;
 
-  abstract checkPointOn(point: Point): boolean;
-
   protected showBBox(): void {
     if (this._bound) {
       this.ctx.rect(

@@ -60,8 +60,17 @@ export class CPCanvasPath extends CPCanvasObject {
 
     this.ctx.strokeStyle =
       this.isPointInStroke || this.isPointInPath
-        ? this.properties?.hoverStrokeColor ?? EDITOR_COLORS.strokeHover
+        ? this.properties?.hoverStrokeColor ??
+          this.properties?.strokeColor ??
+          EDITOR_COLORS.strokeHover
         : this.properties?.strokeColor ?? EDITOR_COLORS.stroke;
+
+    this.ctx.fillStyle =
+      this.isPointInStroke || this.isPointInPath
+        ? this.properties?.hoverFill ??
+          this.properties?.fill ??
+          EDITOR_COLORS.fillHover
+        : this.properties?.fill ?? EDITOR_COLORS.fill;
 
     this.ctx.fill(this.path);
     this.ctx.stroke(this.path);

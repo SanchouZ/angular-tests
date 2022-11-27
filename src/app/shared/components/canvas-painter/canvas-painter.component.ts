@@ -15,13 +15,18 @@ import {
   QueryList,
   Renderer2,
   ViewChild,
+  ViewChildren,
 } from '@angular/core';
 
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import { fadeInOutAnimation } from './animations/fade-in-out.animation';
-import { EDITOR_COLORS, EDITOR_DIMS } from './config/editor.config';
+import {
+  EDITOR_COLORS,
+  EDITOR_DIMS,
+  EDITOR_MARKER,
+} from './config/editor.config';
 import { CPMarker } from './directives/marker.directive';
 import { CPSVGPath } from './directives/svg-path.directive';
 import { SceneSVGLayers } from './models/editor-only.model';
@@ -57,7 +62,10 @@ export class CanvasPainterComponent
 
   @ViewChild('svgOverlay', { static: true }) svg: ElementRef<SVGElement>;
 
-  @Input() set zoom(zoomLevel: number) {
+  @ViewChildren(CPMarker) editorMarker: QueryList<CPMarker>;
+
+  @Input()
+  set zoom(zoomLevel: number) {
     if (
       this.ctx &&
       zoomLevel <= this.maxZoom &&
@@ -198,6 +206,7 @@ export class CanvasPainterComponent
   private sub = new Subscription();
 
   public isLoading = false;
+  public editorMarkerOptions = EDITOR_MARKER;
 
   @HostListener('window:resize', ['$event'])
   public validateCanvas() {
@@ -669,16 +678,23 @@ export class CanvasPainterComponent
 
   private updateMarkers(): void {
     this.markersHasLinks = false;
-    this.markers?.forEach((marker) => {
+
+    const update = (marker: CPMarker) => {
       const containerCoords = this.utils.getContainerCoordinates(
         marker.x,
         marker.y
       );
       marker.updatePosition(containerCoords);
+    };
+
+    this.markers?.forEach((marker) => {
+      update(marker);
       if (marker.linkedMarkers && marker.linkedMarkers.length > 0) {
         this.markersHasLinks = true;
       }
     });
+
+    this.editorMarker?.forEach(update);
   }
 
   private createMarkerLinks(): void {
@@ -981,6 +997,13 @@ export class CanvasPainterComponent
 
   public handlePathClick(): void {
     console.log('path');
+  }
+
+  public handleEditorMarkerUpdate(position: Point, object: CPObject): void {
+    if (object && object.pivot) {
+      object.pivot.world.x = position.x;
+      object.pivot.world.y = position.y;
+    }
   }
 
   private drawArc(x: number, y: number) {

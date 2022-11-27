@@ -2,12 +2,15 @@ import {
   CPBound,
   CPClickEvent,
   CPObjectProperties,
+  ObjectPivot,
   Point,
 } from '../models/editor.model';
+import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.service';
 
 export abstract class CPObject {
   public static count = 0;
   protected _id: number;
+  protected utils = new CanvasPainterUtilsService();
 
   public isPointInStroke = false;
   public isPointInPath = false;
@@ -15,7 +18,7 @@ export abstract class CPObject {
   public clickCallback: (event: CPClickEvent, data: any) => void;
 
   protected _preview: HTMLImageElement;
-  protected _pivot: Point;
+  protected _pivot: ObjectPivot;
   protected _rotationAngle: number = 0;
   protected _scaleX: number = 1;
   protected _scaleY: number = 1;
@@ -29,51 +32,61 @@ export abstract class CPObject {
     this._opacity = properties?.opacity ?? 1;
   }
 
-  get id(): number {
+  public get id(): number {
     return this._id;
   }
 
-  get pivot(): Point {
+  public get pivot(): ObjectPivot {
     return this._pivot;
   }
 
-  set pivot(point: Point) {
+  public set pivot(point: ObjectPivot) {
     this._pivot = point;
   }
 
-  get editable(): boolean {
+  public updateWorldPivot(point: Point) {
+    this._pivot.world.x = point.x;
+    this._pivot.world.y = point.y;
+  }
+
+  public updateLocalPivot(point: Point) {
+    this._pivot.local.x = point.x;
+    this._pivot.local.y = point.y;
+  }
+
+  public get editable(): boolean {
     return this._editable;
   }
 
-  set editable(editable: boolean) {
+  public set editable(editable: boolean) {
     this._editable = editable;
   }
 
-  get rotationAngle(): number {
+  public get rotationAngle(): number {
     return this._rotationAngle;
   }
 
-  get scaleX(): number {
+  public get scaleX(): number {
     return this._scaleX;
   }
 
-  get scaleY(): number {
+  public get scaleY(): number {
     return this._scaleY;
   }
 
-  get opacity(): number {
+  public get opacity(): number {
     return this._opacity;
   }
 
-  set opacity(opacity: number) {
+  public set opacity(opacity: number) {
     this._opacity = opacity;
   }
 
-  get preview(): HTMLImageElement {
+  public get preview(): HTMLImageElement {
     return this._preview;
   }
 
-  get bound(): CPBound {
+  public get bound(): CPBound {
     return this._bound;
   }
 
@@ -117,5 +130,107 @@ export abstract class CPObject {
       width: Math.abs(maxX - minX),
       height: Math.abs(maxY - minY),
     };
+  }
+
+  abstract checkPointOn(point: Point): boolean;
+
+  /**
+   * Return images space coordinates
+   * @param { Point } point - Canvas coordinates
+   * @returns
+   */
+  public getLocalCoords(
+    point: Point
+  ): { current: Point; original: Point } | null {
+    if (this.checkPointOn(point)) {
+      return this.createLocalCoords(point);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Return canvas space coordinates
+   * @param { Point } point - Object local coordinates
+   * @returns
+   */
+  public getCanvasCoords(point: Point): Point {
+    const [rotated] = this.utils.rotatePoints(
+      [{ x: point.x, y: point.y }],
+      this._rotationAngle,
+      {
+        x: this.pivot.local.x,
+        y: this.pivot.local.y,
+      }
+    );
+
+    const [objectOriginal] = this.utils.scalePoints(
+      [rotated],
+      this._scaleX,
+      this._scaleY,
+      {
+        x: 0,
+        y: 0,
+      }
+    );
+
+    // console.log(
+    //   'canvas - coords: ',
+    //   objectOriginal.x + this.pivot.world.x - this.pivot.local.x * this._scaleX,
+    //   objectOriginal.y + this.pivot.world.y - this.pivot.local.y * this._scaleY
+    // );
+
+    return {
+      x:
+        objectOriginal.x +
+        this.pivot.world.x -
+        this.pivot.local.x * this._scaleX,
+      y:
+        objectOriginal.y +
+        this.pivot.world.y -
+        this.pivot.local.y * this._scaleY,
+    };
+  }
+
+  protected createLocalCoords(point: Point): {
+    current: Point;
+    original: Point;
+  } {
+    const x =
+      point.x - (this.pivot.world.x - this.pivot.local.x * this._scaleX);
+    const y =
+      point.y - (this.pivot.world.y - this.pivot.local.y * this._scaleY);
+    // console.log('input - x: ', x, ' : ', 'y: ', y);
+
+    const [rotated] = this.utils.rotatePoints(
+      [{ x, y }],
+      -this._rotationAngle,
+      {
+        x: this.pivot.local.x * this.scaleX,
+        y: this.pivot.local.y * this.scaleY,
+      }
+    );
+
+    // console.log('rotated - x: ', rotated.x, ' : ', 'y: ', rotated.y);
+
+    const [objectOriginal] = this.utils.scalePoints(
+      [rotated],
+      1 / this._scaleX,
+      1 / this._scaleY,
+      {
+        x: 0,
+        y: 0,
+      }
+    );
+
+    // console.log(
+    //   'imageOriginal - x: ',
+    //   objectOriginal.x,
+    //   ' : ',
+    //   'y: ',
+    //   objectOriginal.y
+    // );
+
+    return { current: rotated, original: objectOriginal };
   }
 }

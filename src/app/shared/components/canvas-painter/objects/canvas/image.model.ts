@@ -6,7 +6,6 @@ import { EDITOR_COLORS, EDITOR_DIMS } from '../../config/editor.config';
 export class CPImage extends CPCanvasObject {
   private _outline: Point[];
   private outlinePath: Path2D;
-  private utils = new CanvasPainterUtilsService();
 
   private _width: number;
   private _height: number;
@@ -14,13 +13,16 @@ export class CPImage extends CPCanvasObject {
   constructor(
     ctx: CanvasRenderingContext2D,
     private image: HTMLImageElement,
-    private insertPoint: Point,
+    insertPoint: Point,
     properties?: CPObjectProperties,
     width?: number,
     height?: number
   ) {
     super(ctx, properties);
-    this._pivot = { x: this.image.width / 2, y: this.image.height / 2 };
+    this._pivot = {
+      world: insertPoint,
+      local: { x: this.image.width / 2, y: this.image.height / 2 },
+    };
     this._editable = properties?.editable;
 
     this._width = width ?? this.image.width;
@@ -41,17 +43,17 @@ export class CPImage extends CPCanvasObject {
     this.makeOutlineCoordinates();
 
     this.ctx.save();
-    this.ctx.translate(this.insertPoint.x, this.insertPoint.y);
+    this.ctx.translate(this.pivot.world.x, this.pivot.world.y);
     this.ctx.rotate(((this._rotationAngle ?? 0) * Math.PI) / 180);
     this.ctx.globalAlpha = this.opacity ?? 1;
     this.ctx.drawImage(
       this.image,
-      -this._pivot.x * this._scaleX,
-      -this._pivot.y * this._scaleY,
+      -this.pivot.local.x * this._scaleX,
+      -this.pivot.local.y * this._scaleY,
       this._width * this._scaleX,
       this._height * this._scaleY
     );
-    this.ctx.translate(-this.insertPoint.x, -this.insertPoint.y);
+    this.ctx.translate(-this.pivot.world.x, -this.pivot.world.y);
     this.ctx.restore();
 
     this.drawOutline();
@@ -88,88 +90,7 @@ export class CPImage extends CPCanvasObject {
     return this.isPointInPath || this.isPointInStroke;
   }
 
-  /**
-   * Return images space coordinates
-   * @param { Point } point - Canvas coordinates
-   * @returns
-   */
-  public getLocalCoords(
-    point: Point
-  ): { current: Point; original: Point } | null {
-    if (this.checkPointOn(point)) {
-      return this.createLocalCoords(point);
-    } else {
-      return null;
-    }
-  }
 
-  /**
-   * Return canvas space coordinates
-   * @param { Point } point - Object local coordinates
-   * @returns
-   */
-  public getCanvasCoords(point: Point): Point {
-    const [rotated] = this.utils.rotatePoints(
-      [{ x: point.x, y: point.y }],
-      this._rotationAngle,
-      {
-        x: this._pivot.x,
-        y: this._pivot.y,
-      }
-    );
-
-    const [imageOriginal] = this.utils.scalePoints(
-      [rotated],
-      this._scaleX,
-      this._scaleY,
-      {
-        x: 0,
-        y: 0,
-      }
-    );
-
-    return {
-      x: imageOriginal.x + this.insertPoint.x - this._pivot.x * this._scaleX,
-      y: imageOriginal.y + this.insertPoint.y - this._pivot.y * this._scaleY,
-    };
-  }
-
-  private createLocalCoords(point: Point): { current: Point; original: Point } {
-    const x = point.x - (this.insertPoint.x - this.pivot.x * this._scaleX);
-    const y = point.y - (this.insertPoint.y - this.pivot.y * this._scaleY);
-    // console.log('input - x: ', x, ' : ', 'y: ', y);
-
-    const [rotated] = this.utils.rotatePoints(
-      [{ x, y }],
-      -this._rotationAngle,
-      {
-        x: this._pivot.x * this.scaleX,
-        y: this._pivot.y * this.scaleY,
-      }
-    );
-
-    // console.log('rotated - x: ', rotated.x, ' : ', 'y: ', rotated.y);
-
-    const [imageOriginal] = this.utils.scalePoints(
-      [rotated],
-      1 / this._scaleX,
-      1 / this._scaleY,
-      {
-        x: 0,
-        y: 0,
-      }
-    );
-
-    // console.log(
-    //   'imageOriginal - x: ',
-    //   imageOriginal.x,
-    //   ' : ',
-    //   'y: ',
-    //   imageOriginal.y
-    // );
-
-    return { current: rotated, original: imageOriginal };
-  }
 
   private drawOutline(): void {
     this.outlinePath = new Path2D();
@@ -202,34 +123,34 @@ export class CPImage extends CPCanvasObject {
   private makeOutlineCoordinates(): void {
     this._outline = [
       {
-        x: this.insertPoint.x - this._pivot.x,
-        y: this.insertPoint.y - this._pivot.y,
+        x: this.pivot.world.x - this.pivot.local.x,
+        y: this.pivot.world.y - this.pivot.local.y,
       },
       {
-        x: this.insertPoint.x + this._pivot.x,
-        y: this.insertPoint.y - this._pivot.y,
+        x: this.pivot.world.x + this.pivot.local.x,
+        y: this.pivot.world.y - this.pivot.local.y,
       },
       {
-        x: this.insertPoint.x + this._pivot.x,
-        y: this.insertPoint.y + this._pivot.y,
+        x: this.pivot.world.x + this.pivot.local.x,
+        y: this.pivot.world.y + this.pivot.local.y,
       },
       {
-        x: this.insertPoint.x - this._pivot.x,
-        y: this.insertPoint.y + this._pivot.y,
+        x: this.pivot.world.x - this.pivot.local.x,
+        y: this.pivot.world.y + this.pivot.local.y,
       },
     ];
 
     this._outline = this.utils.rotatePoints(
       this._outline,
       this._rotationAngle,
-      this.insertPoint
+      this.pivot.world
     );
 
     this._outline = this.utils.scalePoints(
       this._outline,
       this._scaleX,
       this._scaleY,
-      this.insertPoint
+      this.pivot.world
     );
 
     this.calcBound(this._outline);

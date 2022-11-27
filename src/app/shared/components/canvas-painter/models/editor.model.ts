@@ -7,6 +7,11 @@ export interface Point {
   y: number;
 }
 
+export interface ObjectPivot {
+  world: Point;
+  local: Point;
+}
+
 export interface CPBound {
   topLeft: Point;
   bottomRight: Point;

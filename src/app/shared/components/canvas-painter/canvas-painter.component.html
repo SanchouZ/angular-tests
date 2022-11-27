@@ -35,7 +35,10 @@
     </div>
     <div class="canvas-painter__edit_markers">
         <ng-container *ngFor="let object of selection">
-            <div *ngIf="object.editable" class="canvas-painte__edit-marker edit-marker">{{ object.id }}</div>
+            <div *ngIf="object.editable && object.pivot" @fadeInOut cpMarker
+                class="canvas-painte__edit-marker cp-edit-marker" [id]="object.id" [x]="object.pivot.world.x"
+                [y]="object.pivot.world.y" [properties]="editorMarkerOptions"
+                (positionUpdated)="handleEditorMarkerUpdate($event, object)"></div>
         </ng-container>
     </div>
     <div *ngIf="isLoading" @fadeInOut class="canvas-painter__overlay_loader">

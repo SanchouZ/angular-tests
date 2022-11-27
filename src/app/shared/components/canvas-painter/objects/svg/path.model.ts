@@ -1,4 +1,4 @@
-import { CPObjectProperties } from '../../models/editor.model';
+import { CPObjectProperties, Point } from '../../models/editor.model';
 import { CPSVGObject } from './svg-object.model';
 
 export class CPPath extends CPSVGObject {
@@ -12,4 +12,8 @@ export class CPPath extends CPSVGObject {
   public rotate(angle: number): void {}
 
   public scale(scaleX: number, scaleY: number): void {}
+
+  public checkPointOn(point: Point): boolean {
+    return false;
+  }
 }

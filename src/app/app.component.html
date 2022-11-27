@@ -26,13 +26,6 @@
           [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"
           (positionUpdated)="handleMarkerPositionUpdate($event, marker)">{{ marker.value }}
         </div>
-
-        <div cpMarker [id]="imageInsertPoint.id" [x]="imageInsertPoint.x" [y]="imageInsertPoint.y"
-          [linkedMarkers]="imageInsertPoint.links" [properties]="markerOptions" class="marker"
-          (click)="handleMarkerClick()" (positionUpdated)="handleMarkerPositionUpdate($event, imageInsertPoint)">{{
-          imageInsertPoint.value }}
-        </div>
-
       </mf-canvas-painter>
 
       <div class="tools-right">

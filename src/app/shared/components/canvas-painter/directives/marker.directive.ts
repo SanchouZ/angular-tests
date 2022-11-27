@@ -113,6 +113,8 @@ export class CPMarker implements OnInit {
 
   ngOnInit(): void {
     this.renderer.setStyle(this.el.nativeElement, 'position', 'absolute');
+    const containerPoint = this.utils.getContainerCoordinates(this.x, this.y);
+    this.updatePosition(containerPoint);
   }
 
   /**

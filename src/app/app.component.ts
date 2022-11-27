@@ -247,7 +247,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     from(
       this.cpObjectsService.createImage(
         '/assets/images/2.jpg',
-        this.imageInsertPoint,
+        { x: 800, y: 600 },
         {
           editable: true,
         }
