@@ -179,7 +179,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   private handleKeyboard(evt: KeyboardEvent) {
     if (evt.code === 'KeyF' && this.testImage && this.cpRef) {
       console.log('FOCUS BOUND');
-      this.cpRef.fitBounds(this.testImage.bound, [30, 30]);
+      this.cpRef.fitBounds(this.testImage.bound, [30, 50]);
     }
 
     if (evt.code === 'KeyW' && this.cpRef) {
@@ -194,15 +194,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    console.log(
-      Math.sin((30 / 180) * Math.PI),
-      Math.cos((30 / 180) * Math.PI),
-      Math.sin((-30 / 180) * Math.PI)
-    );
+    // console.log(
+    //   Math.sin((30 / 180) * Math.PI),
+    //   Math.cos((30 / 180) * Math.PI),
+    //   Math.sin((-30 / 180) * Math.PI)
+    // );
 
-    console.log(Math.asinh(Math.sin(30 / 180) * Math.PI));
+    // console.log(Math.asinh(Math.sin(30 / 180) * Math.PI));
 
-    console.log(Math.asinh(Math.sin(30 / 180) * Math.PI) * (180 / Math.PI));
+    // console.log(Math.asinh(Math.sin(30 / 180) * Math.PI) * (180 / Math.PI));
   }
 
   ngAfterViewInit(): void {

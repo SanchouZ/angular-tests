@@ -15,7 +15,7 @@ import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.serv
 @Directive({
   selector: '[cpMarker]',
 })
-export class CPMarker implements OnInit {
+export class CPMarkerDirective implements OnInit {
   @Input() id: number;
 
   /**

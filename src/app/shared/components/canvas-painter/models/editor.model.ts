@@ -27,6 +27,12 @@ export interface CPClickEvent {
   frame: CPBound;
 }
 
+export interface CPImageClickEvent {
+  click: CPClickEvent;
+  imageCoords: Point;
+  transformedImageCoords: Point;
+}
+
 export interface CPCanvasLayer extends CPLayer {
   objects: CPCanvasObject[];
 }

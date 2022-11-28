@@ -14,13 +14,15 @@
           </div>
         </div>
 
-        <cp-svg-path [geometry]="[[[0,0], [100,100], [200,-300], [420,150]], [[420,150], [400,500], [278,500]]]"
+        <cp-path [geometry]="[[[0,0], [100,100], [200,-300], [420,150]], [[420,150], [400,500], [278,500]]]"
           [properties]="pathOptions" (pathClick)="pathClick($event, pathOptions)">
-        </cp-svg-path>
+        </cp-path>
 
-        <cp-svg-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [properties]="pathOptions"></cp-svg-path>
-        <cp-svg-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [properties]="pathOptions"></cp-svg-path>
-        <cp-svg-path [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [properties]="pathOptions"></cp-svg-path>
+        <cp-path [geometry]="[[400,-400], [620,-420], [510,-450]]" [properties]="pathOptions"></cp-path>
+        <cp-path [geometry]="[[-400,400], [-620,420], [-510,450]]" [properties]="pathOptions"></cp-path>
+        <cp-path [target]="'canvas'" [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [properties]="pathOptions"
+          (pathClick)="pathClick($event, 'hello')">
+        </cp-path>
 
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
           [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"

@@ -66,7 +66,19 @@ export class CanvasPainterObjectsService {
     geometry: number[][] | number[][][],
     properties?: CPObjectProperties
   ): CPCanvasPath {
-    const points: (Point | Point[])[] = geometry.map((point) => {
+    const points = this.geometryToPoints(geometry);
+
+    return new CPCanvasPath(this._ctx, points, {
+      ...properties,
+      maintainRelativeWidth:
+        properties?.maintainRelativeWidth ?? this._maintainWidth,
+    });
+  }
+
+  public geometryToPoints(
+    geometry: (number[] | number[][])[]
+  ): (Point | Point[])[] {
+    return geometry.map((point) => {
       if (Array.isArray(point[0])) {
         return (point as number[][]).map((point) => {
           return { x: point[0], y: point[1] } as Point;
@@ -74,12 +86,6 @@ export class CanvasPainterObjectsService {
       } else {
         return { x: point[0], y: point[1] } as Point;
       }
-    });
-
-    return new CPCanvasPath(this._ctx, points, {
-      ...properties,
-      maintainRelativeWidth:
-        properties?.maintainRelativeWidth ?? this._maintainWidth,
     });
   }
 }

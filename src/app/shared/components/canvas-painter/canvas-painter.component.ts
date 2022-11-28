@@ -27,8 +27,8 @@ import {
   EDITOR_DIMS,
   EDITOR_MARKER,
 } from './config/editor.config';
-import { CPMarker } from './directives/marker.directive';
-import { CPSVGPath } from './directives/svg-path.directive';
+import { CPMarkerDirective } from './directives/marker.directive';
+import { CPPathDirective } from './directives/path.directive';
 import { SceneSVGLayers } from './models/editor-only.model';
 import {
   CPBound,
@@ -46,6 +46,7 @@ import { CPObject } from './objects/object.model';
 import { CanvasPainterUtilsService } from './services/canvas-painter-utils.service';
 import { CanvasPainterObjectsService } from './services/objects.service';
 import { CPImage } from './objects/canvas/image.model';
+import { CPImageDirective } from './directives/image.directive';
 
 @Component({
   selector: 'mf-canvas-painter',
@@ -62,7 +63,7 @@ export class CanvasPainterComponent
 
   @ViewChild('svgOverlay', { static: true }) svg: ElementRef<SVGElement>;
 
-  @ViewChildren(CPMarker) editorMarker: QueryList<CPMarker>;
+  @ViewChildren(CPMarkerDirective) editorMarker: QueryList<CPMarkerDirective>;
 
   @Input()
   set zoom(zoomLevel: number) {
@@ -174,14 +175,19 @@ export class CanvasPainterComponent
   @Output() private loading = new EventEmitter<boolean>();
   @Output() private selectObjects = new EventEmitter<CPObject[]>();
 
-  @ContentChildren(CPMarker) markers: QueryList<CPMarker>;
-  @ContentChildren(CPSVGPath) svgPaths: QueryList<CPSVGPath>;
+  @ContentChildren(CPMarkerDirective) markers: QueryList<CPMarkerDirective>;
+  @ContentChildren(CPPathDirective) templatePaths: QueryList<CPPathDirective>;
+  @ContentChildren(CPImageDirective)
+  templateImages: QueryList<CPImageDirective>;
 
   private ctx: CanvasRenderingContext2D;
 
   private imageEntryPoint: Point = { x: 0, y: 0 };
   private clicks: Point[] = [];
-  private templateSvgLayerId = 'fr_tmp';
+  private templateSvgLayerId = 'svg_fr_tmp';
+  private templateCanvasLayerId = 'canvas_fr_tmp';
+  private templateImagesLayerId = 'images_fr_tmp';
+  private templateImagesCahche = new Map<string, CPImage>();
   private markersLayerId = 'markers-lines';
   private markersHasLinks = false;
   private showSin = false;
@@ -359,7 +365,7 @@ export class CanvasPainterComponent
     this.updateCanvasBounds();
     this.createMarkerLinks();
     this.redraw();
-    this.createSVGLayerFromTemplate();
+    this.createPathsFromTemplate();
 
     this.zone.runOutsideAngular(() => {
       this.canvasContainer.nativeElement.addEventListener(
@@ -380,7 +386,14 @@ export class CanvasPainterComponent
         console.log(intercect);
         intercect.intercectedObjects.forEach((object) => {
           if (object.clickCallback) {
-            object.clickCallback(this.getEventInfo(), object.properties?.data);
+            if (object instanceof CPImage) {
+              console.log('IMAGE');
+            } else {
+              object.clickCallback(
+                this.getEventInfo(),
+                object.properties?.data
+              );
+            }
           }
         });
         this.selectObjects.emit(intercect.intercectedObjects);
@@ -403,8 +416,13 @@ export class CanvasPainterComponent
         .subscribe()
     );
     this.sub.add(
-      this.svgPaths.changes
-        .pipe(tap(() => this.createSVGLayerFromTemplate()))
+      this.templatePaths.changes
+        .pipe(
+          tap(() => {
+            this.createPathsFromTemplate();
+            this.redraw();
+          })
+        )
         .subscribe()
     );
   }
@@ -508,22 +526,52 @@ export class CanvasPainterComponent
     return this._selection;
   }
 
-  private createSVGLayerFromTemplate(): void {
-    if (this.svgPaths) {
+  private createPathsFromTemplate(): void {
+    if (this.templatePaths) {
       this.#layersSVG[this.templateSvgLayerId] = {
         id: this.templateSvgLayerId,
         name: this.templateSvgLayerId,
         opacity: 1,
-        objects: this.svgPaths.toArray(),
+        objects: this.templatePaths
+          .toArray()
+          .filter((path) => path.target === 'svg'),
+      };
+
+      this.#layersCanvas[this.templateCanvasLayerId] = {
+        id: this.templateCanvasLayerId,
+        name: this.templateCanvasLayerId,
+        opacity: 1,
+        objects: this.templatePaths
+          .toArray()
+          .filter((path) => path.target === 'canvas')
+          .map(
+            (path) =>
+              new CPCanvasPath(
+                this.ctx,
+                this.objectsService.geometryToPoints(path.geometry),
+                {
+                  ...path.properties,
+                  clickCallback:
+                    path.properties.clickCallback ??
+                    function (event, data) {
+                      path.pathClick.emit(event);
+                    },
+                }
+              )
+          ),
       };
     }
+  }
+
+  private createImagesFromTemplate(): void {
+
   }
 
   private createSVGLayer(layer: CPSVGLayer): void {
     this.#layersSVG[layer.id] = {
       ...layer,
       objects: layer.objects.map((object) => {
-        const svgHost = new CPSVGPath('', this.utils);
+        const svgHost = new CPPathDirective('', this.utils);
         svgHost.geometry = object.geometry;
         svgHost.properties = object.properties;
         svgHost.clickCallback = object.properties.clickCallback;
@@ -679,7 +727,7 @@ export class CanvasPainterComponent
   private updateMarkers(): void {
     this.markersHasLinks = false;
 
-    const update = (marker: CPMarker) => {
+    const update = (marker: CPMarkerDirective) => {
       const containerCoords = this.utils.getContainerCoordinates(
         marker.x,
         marker.y
@@ -706,7 +754,7 @@ export class CanvasPainterComponent
     this.markers?.forEach((marker) => {
       if (marker.linkedMarkers && marker.linkedMarkers.length > 0) {
         alreadyProcced.add(marker.id);
-        const linkedMarkers: CPMarker[] = [];
+        const linkedMarkers: CPMarkerDirective[] = [];
         marker.linkedMarkers.forEach((id) => {
           const linkedmarker = this.markers?.find((marker) => marker.id === id);
           if (linkedmarker) {
@@ -780,7 +828,7 @@ export class CanvasPainterComponent
   public currentAnimation: number;
 
   public fitBounds(targetBound: CPBound, padding?: [number, number]) {
-    let bound = targetBound;
+    let bound = { ...targetBound };
     if (padding) {
       bound = {
         topLeft: {
@@ -799,7 +847,6 @@ export class CanvasPainterComponent
         ),
       };
     }
-
     let transform = this.ctx.getTransform();
 
     const capturedZoom = this.#zoom;
@@ -873,6 +920,7 @@ export class CanvasPainterComponent
   } {
     let transform = this.ctx.getTransform();
     const transformInv = this.ctx.getTransform().inverse();
+    this.#canvasFrame = this.getCanvasFrame();
 
     const zoomX = this.#canvasFrame.width / bound.width;
     const zoomY = this.#canvasFrame.height / bound.height;

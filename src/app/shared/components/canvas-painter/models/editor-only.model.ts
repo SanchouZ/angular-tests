@@ -1,4 +1,4 @@
-import { CPSVGPath } from '../directives/svg-path.directive';
+import { CPPathDirective } from '../directives/path.directive';
 
 export interface CPLayer {
   id: string;
@@ -10,7 +10,7 @@ export interface CPLayer {
  * This is for using inside the lib, DO NOT use for component input, instead use CPSVGLayer
  */
 export interface SceneSVGLayer extends CPLayer {
-  objects: CPSVGPath[];
+  objects: CPPathDirective[];
 }
 
 /**
