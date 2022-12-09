@@ -11,6 +11,7 @@ export class CPCanvasPath extends CPCanvasObject {
     properties: CPObjectProperties
   ) {
     super(ctx, properties);
+    this.calcBound(this.points.flat());
   }
 
   draw(): void {
@@ -89,8 +90,8 @@ export class CPCanvasPath extends CPCanvasObject {
   }
 
   public checkPointOn(point: Point): boolean {
-    this.isPointInPath = this.ctx.isPointInPath(this.path, point.x, point.y);
-    this.isPointInStroke = this.ctx.isPointInStroke(
+    this.isPointInPath = this.ctx?.isPointInPath(this.path, point.x, point.y);
+    this.isPointInStroke = this.ctx?.isPointInStroke(
       this.path,
       point.x,
       point.y

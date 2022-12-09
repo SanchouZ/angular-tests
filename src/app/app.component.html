@@ -3,7 +3,7 @@
   <main>
     <nav></nav>
     <div class="canvas">
-      <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="false"
+      <mf-canvas-painter [showDebugPanel]="true" [bgImageByURL]="imageURL$ | async" [centerOrigin]="true"
         [holdZoomToImage]="false" [zoom]="zoom" [maintainRelativeWidth]="true" [layersSVG]="svgLayers"
         (canvasReady)="onCanvasReady($event)" (zoomChange)="onChangeZoom($event)"
         (canvasClick)="handleCanvasClick($event)" (selectObjects)="handleSelectObjects($event)">
@@ -23,6 +23,16 @@
         <cp-path [target]="'canvas'" [geometry]="[[-400,-400], [-620,-420], [-510,-450]]" [properties]="pathOptions"
           (pathClick)="pathClick($event, 'hello')">
         </cp-path>
+
+        <cp-path *ngFor="let p of fakeArr" [target]="'canvas'" [geometry]="getFakeCoords(p, 100, 100)"
+          [properties]="pathOptions" (pathClick)="pathClick($event, '')">
+        </cp-path>
+
+        <cp-image [url]="'/assets/images/1.png'" [centerPoint]="[-200, -200]" [properties]="{ editable: true }"
+          (imageClick)="imageClick($event, '/assets/images/1.png')">
+        </cp-image>
+
+        <!-- <cp-image *ngIf="showSecondImage" [url]="'/assets/images/4.png'" [centerPoint]="[-400, 150]"></cp-image> -->
 
         <div *ngFor="let marker of markers" cpMarker [id]="marker.id" [x]="marker.x" [y]="marker.y"
           [linkedMarkers]="marker.links" [properties]="markerOptions" class="marker" (click)="handleMarkerClick()"
@@ -58,14 +68,14 @@
           <div class="tool__control">
             <p>Rotation: {{ object.rotationAngle }}</p>
             <mat-slider style="width: 100%;" min="-180" max="180" step="0.01" [value]="object.rotationAngle"
-              (input)="handleObjectRotation(object, $event.value)" showTickMarks>
+              [disabled]="!object.editable" (input)="handleObjectRotation(object, $event.value)" showTickMarks>
               <input matSliderThumb>
             </mat-slider>
           </div>
           <div class="tool__control">
             <p>Scale: {{ object.scaleX }}</p>
             <mat-slider style="width: 100%;" min="0.5" max="2.5" step="0.01" [value]="object.scaleX"
-              (input)="handleObjectScale(object, $event.value)" showTickMarks>
+              [disabled]="!object.editable" (input)="handleObjectScale(object, $event.value)" showTickMarks>
               <input matSliderThumb>
             </mat-slider>
           </div>

@@ -54,6 +54,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public imageURL$ = new BehaviorSubject<string>(null);
 
   public zoom: number = 1;
+  public showSecondImage = false;
 
   private cpRef: CanvasPainterComponent;
   public selectedObjects: CPObject[] = [];
@@ -179,7 +180,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   private handleKeyboard(evt: KeyboardEvent) {
     if (evt.code === 'KeyF' && this.testImage && this.cpRef) {
       console.log('FOCUS BOUND');
-      this.cpRef.fitBounds(this.testImage.bound, [30, 50]);
+      // this.cpRef.fitBounds(this.testImage.bound, [30, 50]);
+      if (
+        this.selectedObjects &&
+        this.selectedObjects[this.selectedObjects.length - 1]
+      ) {
+        this.cpRef.fitBounds(
+          this.selectedObjects[this.selectedObjects.length - 1].bound,
+          [30, 50]
+        );
+      }
     }
 
     if (evt.code === 'KeyW' && this.cpRef) {
@@ -193,15 +203,26 @@ export class AppComponent implements OnInit, AfterViewInit {
     private cpObjectsService: CanvasPainterObjectsService
   ) {}
 
+  get fakeArr(): number[] {
+    return Array.from({ length: 0 }, (e, i) => i + 1);
+  }
+
+  getFakeCoords(i: number, col: number = 10, row: number = 10): number[][] {
+    return [
+      [-400 + 200 * (i % col), -400 + 100 * Math.floor(i / row)],
+      [-620 + 200 * (i % col), -420 + 100 * Math.floor(i / row)],
+      [-510 + 200 * (i % col), -450 + 100 * Math.floor(i / row)],
+    ];
+  }
+
   ngOnInit(): void {
+    console.log(Array.from({ length: 10 }, (e, i) => i + 1));
     // console.log(
     //   Math.sin((30 / 180) * Math.PI),
     //   Math.cos((30 / 180) * Math.PI),
     //   Math.sin((-30 / 180) * Math.PI)
     // );
-
     // console.log(Math.asinh(Math.sin(30 / 180) * Math.PI));
-
     // console.log(Math.asinh(Math.sin(30 / 180) * Math.PI) * (180 / Math.PI));
   }
 
@@ -242,7 +263,9 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(this.svgLayers);
     }, 5000);
 
-    setTimeout(async () => {}, 3000);
+    setTimeout(async () => {
+      this.showSecondImage = true;
+    }, 5000);
 
     from(
       this.cpObjectsService.createImage(
@@ -319,6 +342,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   pathClick(evt: CPClickEvent, data: any): void {
     console.log('path click');
+    console.log(evt);
+    console.log(data);
+  }
+
+  imageClick(evt: CPClickEvent, data: any): void {
+    console.log('image click');
     console.log(evt);
     console.log(data);
   }

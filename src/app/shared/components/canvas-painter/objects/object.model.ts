@@ -26,6 +26,8 @@ export abstract class CPObject {
   protected _bound: CPBound;
   protected _opacity: number = 1;
 
+  public drawn = false;
+
   constructor(public properties: CPObjectProperties) {
     this.clickCallback = properties?.clickCallback;
     this._id = 100 + CPObject.count++;
@@ -142,11 +144,14 @@ export abstract class CPObject {
   public getLocalCoords(
     point: Point
   ): { current: Point; original: Point } | null {
-    if (this.checkPointOn(point)) {
-      return this.createLocalCoords(point);
-    } else {
-      return null;
-    }
+    const isPointOn = this.checkPointOn(point);
+
+    return this.createLocalCoords(point);
+    // if (isPointOn) {
+    //   return this.createLocalCoords(point);
+    // } else {
+    //   return null;
+    // }
   }
 
   /**

@@ -29,6 +29,8 @@ export class CPImage extends CPCanvasObject {
     this._height = height ?? this.image.height;
 
     this._preview = this.image;
+
+    this.makeOutlineCoordinates();
   }
 
   get width(): number {
@@ -83,14 +85,11 @@ export class CPImage extends CPCanvasObject {
       point.x,
       point.y
     );
-
-    if (this.isPointInPath || this.isPointInStroke) {
-      this.createLocalCoords(point);
-    }
+    // if (this.isPointInPath || this.isPointInStroke) {
+    //   this.createLocalCoords(point);
+    // }
     return this.isPointInPath || this.isPointInStroke;
   }
-
-
 
   private drawOutline(): void {
     this.outlinePath = new Path2D();

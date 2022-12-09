@@ -7,6 +7,11 @@
         <div>Zoom: {{ zoom }}</div>
         <div>Frame: {{ canvasFrame | json }}</div>
         <div>Transform: {{ transform | json }}</div>
+        <div>Last DRAW time: {{ lastDrawTime }} ms</div>
+        <div>Max DRAW time: {{ maxDrawTime }} ms</div>
+        <div>Last INTERCECT CHECK time: {{ lastCheckIntercectTIme }} ms</div>
+        <div>Max INTERCECT CHECK time: {{ maxCheckIntercectTIme }} ms</div>
+        <div>Draw Count: {{ drawCount }}</div>
     </div>
     <svg xmlns="http://www.w3.org/2000/svg" class="canvas-painter__overlay_svg" #svgOverlay>
         <g>

@@ -103,9 +103,9 @@ export class CanvasPainterComponent
     strokeLineCap: 'round',
     maintainRelativeWidth: false,
     clickCallback: (event, data) => {
-      console.log('CANVAS PATH');
-      console.log(event);
-      console.log(data);
+      // console.log('CANVAS PATH');
+      // console.log(event);
+      // console.log(data);
     },
   };
 
@@ -187,7 +187,7 @@ export class CanvasPainterComponent
   private templateSvgLayerId = 'svg_fr_tmp';
   private templateCanvasLayerId = 'canvas_fr_tmp';
   private templateImagesLayerId = 'images_fr_tmp';
-  private templateImagesCahche = new Map<string, CPImage>();
+  private templateImagesCache = new Map<string, CPImage>();
   private markersLayerId = 'markers-lines';
   private markersHasLinks = false;
   private showSin = false;
@@ -208,11 +208,18 @@ export class CanvasPainterComponent
   #canvasFrame: CPBound;
   #holdBound: CPBound;
   #zoom: number;
+  #drawCount: number = 0;
 
   private sub = new Subscription();
 
   public isLoading = false;
   public editorMarkerOptions = EDITOR_MARKER;
+
+  public lastDrawTime: number = 0;
+  public lastCheckIntercectTIme: number = 0;
+
+  public maxDrawTime: number = -1;
+  public maxCheckIntercectTIme: number = 0;
 
   @HostListener('window:resize', ['$event'])
   public validateCanvas() {
@@ -322,6 +329,8 @@ export class CanvasPainterComponent
     }
   }
 
+  private canvasWorker: Worker;
+
   constructor(
     public utils: CanvasPainterUtilsService,
     public objectsService: CanvasPainterObjectsService,
@@ -331,6 +340,20 @@ export class CanvasPainterComponent
   ) {}
 
   ngOnInit(): void {
+    if (typeof Worker !== 'undefined') {
+      // Create a new
+      this.canvasWorker = new Worker(
+        new URL('./canvas-painter.worker', import.meta.url)
+      );
+      this.canvasWorker.onmessage = ({ data }) => {
+        console.log(`page got message: ${data}`);
+      };
+      this.canvasWorker.postMessage('hello');
+    } else {
+      // Web workers are not supported in this environment.
+      // You should add a fallback so that your program still executes correctly.
+    }
+
     this.ctx = this.canvas.nativeElement.getContext('2d');
 
     if (this.ctx) {
@@ -366,6 +389,7 @@ export class CanvasPainterComponent
     this.createMarkerLinks();
     this.redraw();
     this.createPathsFromTemplate();
+    this.createImagesFromTemplate();
 
     this.zone.runOutsideAngular(() => {
       this.canvasContainer.nativeElement.addEventListener(
@@ -383,11 +407,21 @@ export class CanvasPainterComponent
 
       this.canvas.nativeElement.addEventListener('click', (evt: MouseEvent) => {
         const intercect = this.checkCanvasObjectIntersect(this.#canvasCoords);
-        console.log(intercect);
+
         intercect.intercectedObjects.forEach((object) => {
           if (object.clickCallback) {
             if (object instanceof CPImage) {
-              console.log('IMAGE');
+              const coordsData = {
+                ...object.getLocalCoords(this.#canvasCoords),
+              };
+              object.clickCallback(
+                {
+                  ...this.getEventInfo(),
+                  objectLocalCoords: coordsData?.original,
+                  transformedObjectLocalCoords: coordsData?.current,
+                },
+                object.properties?.data
+              );
             } else {
               object.clickCallback(
                 this.getEventInfo(),
@@ -421,6 +455,16 @@ export class CanvasPainterComponent
           tap(() => {
             this.createPathsFromTemplate();
             this.redraw();
+          })
+        )
+        .subscribe()
+    );
+
+    this.sub.add(
+      this.templateImages.changes
+        .pipe(
+          tap(() => {
+            this.createImagesFromTemplate();
           })
         )
         .subscribe()
@@ -488,6 +532,10 @@ export class CanvasPainterComponent
   // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
   public get zoom(): number {
     return this.#zoom;
+  }
+
+  public get drawCount(): number {
+    return this.#drawCount;
   }
 
   public get transform(): {
@@ -563,8 +611,47 @@ export class CanvasPainterComponent
     }
   }
 
-  private createImagesFromTemplate(): void {
+  private async createImagesFromTemplate(): Promise<void> {
+    if (!this.#layersCanvas[this.templateImagesLayerId]) {
+      this.#layersCanvas[this.templateImagesLayerId] = {
+        id: this.templateImagesLayerId,
+        name: this.templateImagesLayerId,
+        opacity: 1,
+        objects: [],
+      };
+    }
 
+    for (const templateImage of this.templateImages?.toArray()) {
+      let image: CPImage;
+
+      if (this.templateImagesCache.has(templateImage.url)) {
+        console.log('get cached: ', templateImage.url);
+        image = this.templateImagesCache.get(templateImage.url);
+      } else {
+        console.log('create new: ', templateImage.url);
+        image = await this.objectsService.createImage(
+          templateImage.url,
+          { x: templateImage.centerPoint[0], y: templateImage.centerPoint[1] },
+          {
+            ...templateImage.properties,
+            clickCallback:
+              templateImage.properties?.clickCallback ??
+              function (event, data) {
+                templateImage.imageClick.emit(event);
+              },
+          },
+          templateImage.width,
+          templateImage.height
+        );
+        this.templateImagesCache.set(templateImage.url, image);
+      }
+      this.#layersCanvas[this.templateImagesLayerId].objects.push(image);
+    }
+
+    if (this.templateImages) {
+      console.log('redraw');
+      this.redraw();
+    }
   }
 
   private createSVGLayer(layer: CPSVGLayer): void {
@@ -634,6 +721,8 @@ export class CanvasPainterComponent
     forceZoomCheck: boolean = false,
     emitZoom: boolean = true
   ): void {
+    const startTime = performance.now();
+
     this.zone.runOutsideAngular(() => {
       this.#canvasFrame = this.getCanvasFrame();
 
@@ -660,9 +749,28 @@ export class CanvasPainterComponent
 
       this.drawBackgroundImage();
 
+      let drawCount = 0;
       Object.values(this.#layersCanvas).forEach((layer) => {
-        layer.objects.forEach((object) => object.draw());
+        layer.objects.forEach((object) => {
+          object.drawn = false;
+          if (
+            ((object.bound.topLeft.x > this.canvasFrame.topLeft.x &&
+              object.bound.topLeft.x < this.canvasFrame.bottomRight.x) ||
+              (object.bound.bottomRight.x > this.canvasFrame.topLeft.x &&
+                object.bound.bottomRight.x < this.canvasFrame.bottomRight.x)) &&
+            ((object.bound.topLeft.y > this.canvasFrame.topLeft.y &&
+              object.bound.topLeft.y < this.canvasFrame.bottomRight.y) ||
+              (object.bound.bottomRight.y > this.canvasFrame.topLeft.y &&
+                object.bound.bottomRight.y < this.canvasFrame.bottomRight.y))
+          ) {
+            drawCount++;
+            object.draw();
+            object.drawn = true;
+          }
+        });
       });
+
+      this.#drawCount = drawCount;
 
       this.clicks.forEach((click) => {
         this.drawArc(click.x, click.y);
@@ -686,6 +794,11 @@ export class CanvasPainterComponent
       this.updateSvgBounds();
       this.updateUtils();
     });
+    this.lastDrawTime = performance.now() - startTime;
+    this.maxDrawTime =
+      this.maxDrawTime < this.lastDrawTime
+        ? this.lastDrawTime
+        : this.maxDrawTime;
   }
 
   private resetContext(): void {
@@ -700,12 +813,17 @@ export class CanvasPainterComponent
     redraw: boolean;
     intercectedObjects: CPObject[];
   } {
+    const startTime = performance.now();
     this.ctx.save();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     const intercectedObjects: CPCanvasObject[] = [];
     let redraw = false;
     Object.values(this.#layersCanvas).forEach((layer) => {
       layer.objects.forEach((object) => {
+        if (!object.drawn) {
+          return;
+        }
+
         if (object.isPointInPath || object.isPointInStroke) {
           redraw = true;
         }
@@ -721,6 +839,13 @@ export class CanvasPainterComponent
       });
     });
     this.ctx.restore();
+
+    this.lastCheckIntercectTIme = performance.now() - startTime;
+    this.maxCheckIntercectTIme =
+      this.maxCheckIntercectTIme < this.lastCheckIntercectTIme
+        ? this.lastCheckIntercectTIme
+        : this.maxCheckIntercectTIme;
+
     return { redraw, intercectedObjects };
   }
 

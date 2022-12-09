@@ -9,7 +9,6 @@ import {
 
 import {
   CPClickEvent,
-  CPImageClickEvent,
   CPObjectProperties,
   Point,
 } from '../models/editor.model';
@@ -20,14 +19,14 @@ import { CanvasPainterUtilsService } from '../services/canvas-painter-utils.serv
 })
 export class CPImageDirective<D = any> {
   @Input() url: string;
-  @Input() centerPoint: Point;
+  @Input() centerPoint: [number, number] = [0, 0];
   @Input() properties: CPObjectProperties;
   @Input() width: number;
   @Input() height: number;
 
   public clickCallback: (event: CPClickEvent, data: D) => void;
 
-  @Output() imageClick = new EventEmitter<CPImageClickEvent>();
+  @Output() imageClick = new EventEmitter<CPClickEvent>();
   constructor(
     @Attribute('class') public hostClass: string,
     private utils: CanvasPainterUtilsService

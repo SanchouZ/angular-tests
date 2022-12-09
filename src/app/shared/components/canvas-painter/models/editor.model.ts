@@ -25,12 +25,8 @@ export interface CPClickEvent {
   containerCoordinates: Point;
   bounds: DOMRect;
   frame: CPBound;
-}
-
-export interface CPImageClickEvent {
-  click: CPClickEvent;
-  imageCoords: Point;
-  transformedImageCoords: Point;
+  objectLocalCoords?: Point;
+  transformedObjectLocalCoords?: Point;
 }
 
 export interface CPCanvasLayer extends CPLayer {
