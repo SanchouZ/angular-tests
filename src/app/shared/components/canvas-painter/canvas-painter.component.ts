@@ -754,14 +754,19 @@ export class CanvasPainterComponent
         layer.objects.forEach((object) => {
           object.drawn = false;
           if (
-            ((object.bound.topLeft.x > this.canvasFrame.topLeft.x &&
+            (((object.bound.topLeft.x > this.canvasFrame.topLeft.x &&
               object.bound.topLeft.x < this.canvasFrame.bottomRight.x) ||
               (object.bound.bottomRight.x > this.canvasFrame.topLeft.x &&
                 object.bound.bottomRight.x < this.canvasFrame.bottomRight.x)) &&
-            ((object.bound.topLeft.y > this.canvasFrame.topLeft.y &&
-              object.bound.topLeft.y < this.canvasFrame.bottomRight.y) ||
-              (object.bound.bottomRight.y > this.canvasFrame.topLeft.y &&
-                object.bound.bottomRight.y < this.canvasFrame.bottomRight.y))
+              ((object.bound.topLeft.y > this.canvasFrame.topLeft.y &&
+                object.bound.topLeft.y < this.canvasFrame.bottomRight.y) ||
+                (object.bound.bottomRight.y > this.canvasFrame.topLeft.y &&
+                  object.bound.bottomRight.y <
+                    this.canvasFrame.bottomRight.y))) ||
+            (object.bound.topLeft.x < this.canvasFrame.topLeft.x &&
+              object.bound.bottomRight.x > this.canvasFrame.bottomRight.x) ||
+            (object.bound.topLeft.y < this.canvasFrame.topLeft.y &&
+              object.bound.bottomRight.y > this.canvasFrame.bottomRight.y)
           ) {
             drawCount++;
             object.draw();
